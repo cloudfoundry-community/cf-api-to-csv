@@ -17,7 +17,7 @@ import (
 type Org struct {
 	name                      string
 	guid                      string
-	associatedAppCreates      []*createAppResponse
+	associatedAppCreates      []createAppResponse
 	associatedAppStarts       []*struct{}
 	associatedAppUpdates      []*struct{}
 	associatedSpaceCreates    []*struct{}
@@ -36,6 +36,19 @@ func main() {
 	}
 	fmt.Println("----- printing orgs -----")
 	fmt.Println(orgs)
+
+	orgs, err = associateAppCreatesWithOrgs(orgs, myClient)
+	if err != nil {
+		bailWith("error associating app creates with orgs: %s", err)
+	}
+	fmt.Println(" ----- printing orgs with app creates -----")
+	fmt.Println(orgs)
+	for _, org := range orgs {
+		fmt.Println(" ----- heres ya gross json Alex ----- ")
+		for _, appCreate := range org.associatedAppCreates {
+			fmt.Println(appCreate)
+		}
+	}
 
 }
 
@@ -160,7 +173,7 @@ type createAppResponse struct {
 	} `json:"resources"`
 }
 
-func associateAppCreatesWithOrgs(orgs []Org, myClient Client) error {
+func associateAppCreatesWithOrgs(orgs []Org, myClient Client) ([]Org, error) {
 	for index, org := range orgs {
 		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=organization_guid:" + org.name)
 		if err != nil {
@@ -170,17 +183,17 @@ func associateAppCreatesWithOrgs(orgs []Org, myClient Client) error {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Println("error reading resp body")
-			return err
+			return nil, err
 		}
 		var responseyDoo createAppResponse
 		err = json.Unmarshal(body, &responseyDoo)
 		if err != nil {
 			fmt.Println("error unmarshalling resp body into json")
-			return err
+			return nil, err
 		}
-		orgs[index].associatedAppCreates = append(orgs[index].associatedAppCreates, &responseyDoo)
+		orgs[index].associatedAppCreates = append(orgs[index].associatedAppCreates, responseyDoo)
 	}
-	return nil
+	return orgs, nil
 }
 
 func setup(myClient *Client) error {
