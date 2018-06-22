@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 
 	"github.com/cloudfoundry-community/go-cfclient"
@@ -32,9 +31,9 @@ func (c *Client) doGetRequest(path string) (*http.Response, error) {
 		return &http.Response{}, err
 	}
 
-	dump, _ := httputil.DumpResponse(resp, true)
-	fmt.Println("----------    dump of GET response body    ----------")
-	fmt.Printf("%s\n", dump)
+	// dump, _ := httputil.DumpResponse(resp, true)
+	// fmt.Println("----------    dump of GET response body    ----------")
+	// fmt.Printf("%s\n", dump)
 	return resp, nil
 
 }
