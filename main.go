@@ -14,6 +14,45 @@ import (
 	ansi "github.com/jhunt/go-ansi"
 )
 
+type CFAppCreate struct {
+	Metadata struct {
+		GUID      string    `json:"guid"`
+		URL       string    `json:"url"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	} `json:"metadata"`
+	Entity struct {
+		Type      string    `json:"type"`
+		Actor     string    `json:"actor"`
+		ActorType string    `json:"actor_type"`
+		ActorName string    `json:"actor_name"`
+		Actee     string    `json:"actee"`
+		ActeeType string    `json:"actee_type"`
+		ActeeName string    `json:"actee_name"`
+		Timestamp time.Time `json:"timestamp"`
+		Metadata  struct {
+			Request struct {
+				Name              string `json:"name"`
+				Instances         int    `json:"instances"`
+				Memory            int    `json:"memory"`
+				State             string `json:"state"`
+				EnvironmentJSON   string `json:"environment_json"`
+				DockerImage       string `json:"docker_image"`
+				DockerCredentials string `json:"docker_credentials"`
+			} `json:"request"`
+		} `json:"metadata"`
+		SpaceGUID        string `json:"space_guid"`
+		OrganizationGUID string `json:"organization_guid"`
+	} `json:"entity"`
+}
+type CFResponse struct {
+	TotalResults int           `json:"total_results"`
+	TotalPages   int           `json:"total_pages"`
+	PrevURL      interface{}   `json:"prev_url"`
+	NextURL      interface{}   `json:"next_url"`
+	Resources    []CFAppCreate `json:"resources"`
+}
+
 func main() {
 	myClient := Client{}
 	err := setup(&myClient)
@@ -21,44 +60,9 @@ func main() {
 		bailWith("err setting up client: %s", err)
 	}
 
-	type CFResponse struct {
-		TotalResults int         `json:"total_results"`
-		TotalPages   int         `json:"total_pages"`
-		PrevURL      interface{} `json:"prev_url"`
-		NextURL      interface{} `json:"next_url"`
-		Resources    []struct {
-			Metadata struct {
-				GUID      string    `json:"guid"`
-				URL       string    `json:"url"`
-				CreatedAt time.Time `json:"created_at"`
-				UpdatedAt time.Time `json:"updated_at"`
-			} `json:"metadata"`
-			Entity struct {
-				Type      string    `json:"type"`
-				Actor     string    `json:"actor"`
-				ActorType string    `json:"actor_type"`
-				ActorName string    `json:"actor_name"`
-				Actee     string    `json:"actee"`
-				ActeeType string    `json:"actee_type"`
-				ActeeName string    `json:"actee_name"`
-				Timestamp time.Time `json:"timestamp"`
-				Metadata  struct {
-					Request struct {
-						Name              string `json:"name"`
-						Instances         int    `json:"instances"`
-						Memory            int    `json:"memory"`
-						State             string `json:"state"`
-						EnvironmentJSON   string `json:"environment_json"`
-						DockerImage       string `json:"docker_image"`
-						DockerCredentials string `json:"docker_credentials"`
-					} `json:"request"`
-				} `json:"metadata"`
-				SpaceGUID        string `json:"space_guid"`
-				OrganizationGUID string `json:"organization_guid"`
-			} `json:"entity"`
-		} `json:"resources"`
-	}
-
+	var orgs = map[string][]*CFResponse{}
+	var spaces = map[string][]*CFResponse{}
+	var Actors = map[string][]*CFResponse{}
 	resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create")
 	if err != nil {
 		bailWith("err getting app creates: %s", err)
@@ -73,6 +77,19 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(response)
+
+	//loop through all of the resources
+	for index, resource := range response.Resources {
+		if val, ok := orgs[resource.Entity.OrganizationGUID]; !ok {
+			//orgs doesn't contain the current org so add it
+			orgs[resource.Entity.OrganizationGUID] = [&resource]
+		}
+		if val, ok = orgs[resource.Entity.SpaceGUID]; !ok {
+			spaces[resource.Entity.SpaceGUID] = &resource
+		}
+		resource.Entity.SpaceGUID
+		resource.Entity.ActorName
+	}
 
 	// resp, err = myClient.doGetRequest("/v2/events?q=type:audit.app.start")
 	// if err != nil {
