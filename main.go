@@ -82,7 +82,7 @@ func main() {
 	for index, resource := range response.Resources {
 		if val, ok := orgs[resource.Entity.OrganizationGUID]; !ok {
 			//orgs doesn't contain the current org so add it
-			orgs[resource.Entity.OrganizationGUID] = [&resource]
+			orgs[resource.Entity.OrganizationGUID] = &resource
 		}
 		if val, ok = orgs[resource.Entity.SpaceGUID]; !ok {
 			spaces[resource.Entity.SpaceGUID] = &resource
