@@ -17,7 +17,7 @@ type Client struct {
 }
 
 func (c *Client) doGetRequest(path string) (*http.Response, error) {
-	fmt.Println("performing GET Request on path: " + c.apiURL.String() + path)
+	//fmt.Println("performing GET Request on path: " + c.apiURL.String() + path)
 	req, err := http.NewRequest("GET", c.apiURL.String()+path, nil)
 	if err != nil {
 		fmt.Println("error forming http GET request")
