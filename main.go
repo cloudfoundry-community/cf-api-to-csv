@@ -24,8 +24,9 @@ func main() {
 	if err != nil {
 		bailWith("error getting orgs: %s", err)
 	}
-	fmt.Println("--------------------------------------------------------------")
+	fmt.Printf("\n\n\n\n\n")
 	fmt.Println("orgs before processing", orgs)
+	fmt.Printf("\n\n\n\n\n")
 
 	//associate app creates with orgs
 	for index, org := range orgs {
@@ -62,20 +63,39 @@ func main() {
 		}
 		orgs[index].associatedSpaceCreates = jsonResponse
 	}
-	fmt.Println("--------------------------------------------------------------")
-	fmt.Println("orgs after data processing:", orgs)
-	fmt.Println("--------------------------------------------------------------")
 
-	//list all service bindings with orgs
-	// for _, org := range orgs {
-	// 	jsonResponse, err := cfServiceBindingsRequest(myClient)
-	// }
+	//get all apps based on org
+	for index, org := range orgs {
+		jsonResponse, err := cfAppsRequest(myClient, "/v2/apps?q=organization_guid:"+org.guid)
+		if err != nil {
+			bailWith("error associating apps with orgs: %s", err)
+		}
+		orgs[index].apps = jsonResponse.Resources
+	}
+
+	for index, org := range orgs {
+		for index, app := range orgs[index].apps {
+			jsonResponse, err := cfAppsRequest(myClient, "/v2/service_bindings?q=app_guid:"+orgs[index].apps[index].apps.guid)
+
+		}
+	}
+
+	//get all service bindings based on apps by org
+
+	fmt.Printf("\n\n\n\n\n")
+	fmt.Println("orgs after data processing:", orgs)
+	fmt.Printf("\n\n\n\n\n")
 
 	//grab all the spaces
 	spaces, err := getSpaces(myClient)
 	if err != nil {
 		bailWith("error getting spaces: %s", err)
 	}
+
+	fmt.Printf("\n\n\n\n\n")
+	fmt.Printf("spaces before data processing\n")
+	fmt.Println(spaces)
+	fmt.Printf("\n\n\n\n\n")
 
 	//associate app starts with spaces
 	for index, space := range spaces {
@@ -103,6 +123,16 @@ func main() {
 		}
 		spaces[index].associatedAppUpdates = jsonResponse
 	}
+
+	fmt.Printf("\n\n\n\n\n")
+	fmt.Printf("spaces after data processing\n")
+	fmt.Println(spaces)
+	fmt.Printf("\n\n\n\n\n")
+
+	//get all apps based on spaces
+
+	// get all service bindings based on apps by space
+
 	// fmt.Println(spaces
 	// for {
 	// 	serve()
@@ -155,6 +185,7 @@ func getSpaces(myClient Client) ([]space, error) {
 type org struct {
 	name                      string
 	guid                      string
+	apps                      []Resources
 	associatedAppCreates      cfEventsAPIResponse
 	associatedAppStarts       cfEventsAPIResponse
 	associatedAppUpdates      cfEventsAPIResponse
@@ -192,7 +223,7 @@ func getOrgs(myClient Client) ([]org, error) {
 	return orgs, nil
 }
 
-type cfEventsAPIResponse struct {
+type cfApp struct {
 	Resources []struct {
 		Metadata struct {
 			GUID      string    `json:"guid"`
@@ -225,6 +256,9 @@ type cfEventsAPIResponse struct {
 		} `json:"entity"`
 	} `json:"resources"`
 }
+type cfEventsAPIResponse struct {
+	apps []cfApp
+}
 
 func cfEventsRequest(myClient Client, endpoint string) (cfEventsAPIResponse, error) {
 	resp, err := myClient.doGetRequest(endpoint)
@@ -242,6 +276,176 @@ func cfEventsRequest(myClient Client, endpoint string) (cfEventsAPIResponse, err
 	if err != nil {
 		fmt.Println("error unmarshalling resp body into json")
 		return cfEventsAPIResponse{}, err
+	}
+	return responseyDoo, nil
+}
+
+type Resources struct {
+	Metadata struct {
+		GUID      string    `json:"guid"`
+		URL       string    `json:"url"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	} `json:"metadata"`
+	Entity struct {
+		Name                     string      `json:"name"`
+		Production               bool        `json:"production"`
+		SpaceGUID                string      `json:"space_guid"`
+		StackGUID                string      `json:"stack_guid"`
+		Buildpack                interface{} `json:"buildpack"`
+		DetectedBuildpack        interface{} `json:"detected_buildpack"`
+		DetectedBuildpackGUID    interface{} `json:"detected_buildpack_guid"`
+		EnvironmentJSON          interface{} `json:"environment_json"`
+		Memory                   int         `json:"memory"`
+		Instances                int         `json:"instances"`
+		DiskQuota                int         `json:"disk_quota"`
+		State                    string      `json:"state"`
+		Version                  string      `json:"version"`
+		Command                  interface{} `json:"command"`
+		Console                  bool        `json:"console"`
+		Debug                    interface{} `json:"debug"`
+		StagingTaskID            interface{} `json:"staging_task_id"`
+		PackageState             string      `json:"package_state"`
+		HealthCheckHTTPEndpoint  string      `json:"health_check_http_endpoint"`
+		HealthCheckType          string      `json:"health_check_type"`
+		HealthCheckTimeout       interface{} `json:"health_check_timeout"`
+		StagingFailedReason      interface{} `json:"staging_failed_reason"`
+		StagingFailedDescription interface{} `json:"staging_failed_description"`
+		Diego                    bool        `json:"diego"`
+		DockerImage              interface{} `json:"docker_image"`
+		DockerCredentials        struct {
+			Username interface{} `json:"username"`
+			Password interface{} `json:"password"`
+		} `json:"docker_credentials"`
+		PackageUpdatedAt     time.Time   `json:"package_updated_at"`
+		DetectedStartCommand string      `json:"detected_start_command"`
+		EnableSSH            bool        `json:"enable_ssh"`
+		Ports                interface{} `json:"ports"`
+		SpaceURL             string      `json:"space_url"`
+		StackURL             string      `json:"stack_url"`
+		RoutesURL            string      `json:"routes_url"`
+		EventsURL            string      `json:"events_url"`
+		ServiceBindingsURL   string      `json:"service_bindings_url"`
+		RouteMappingsURL     string      `json:"route_mappings_url"`
+	} `json:"entity"`
+}
+type cfAppsAPIResponse struct {
+	Resources []struct {
+		Metadata struct {
+			GUID      string    `json:"guid"`
+			URL       string    `json:"url"`
+			CreatedAt time.Time `json:"created_at"`
+			UpdatedAt time.Time `json:"updated_at"`
+		} `json:"metadata"`
+		Entity struct {
+			Name                     string      `json:"name"`
+			Production               bool        `json:"production"`
+			SpaceGUID                string      `json:"space_guid"`
+			StackGUID                string      `json:"stack_guid"`
+			Buildpack                interface{} `json:"buildpack"`
+			DetectedBuildpack        interface{} `json:"detected_buildpack"`
+			DetectedBuildpackGUID    interface{} `json:"detected_buildpack_guid"`
+			EnvironmentJSON          interface{} `json:"environment_json"`
+			Memory                   int         `json:"memory"`
+			Instances                int         `json:"instances"`
+			DiskQuota                int         `json:"disk_quota"`
+			State                    string      `json:"state"`
+			Version                  string      `json:"version"`
+			Command                  interface{} `json:"command"`
+			Console                  bool        `json:"console"`
+			Debug                    interface{} `json:"debug"`
+			StagingTaskID            interface{} `json:"staging_task_id"`
+			PackageState             string      `json:"package_state"`
+			HealthCheckHTTPEndpoint  string      `json:"health_check_http_endpoint"`
+			HealthCheckType          string      `json:"health_check_type"`
+			HealthCheckTimeout       interface{} `json:"health_check_timeout"`
+			StagingFailedReason      interface{} `json:"staging_failed_reason"`
+			StagingFailedDescription interface{} `json:"staging_failed_description"`
+			Diego                    bool        `json:"diego"`
+			DockerImage              interface{} `json:"docker_image"`
+			DockerCredentials        struct {
+				Username interface{} `json:"username"`
+				Password interface{} `json:"password"`
+			} `json:"docker_credentials"`
+			PackageUpdatedAt     time.Time   `json:"package_updated_at"`
+			DetectedStartCommand string      `json:"detected_start_command"`
+			EnableSSH            bool        `json:"enable_ssh"`
+			Ports                interface{} `json:"ports"`
+			SpaceURL             string      `json:"space_url"`
+			StackURL             string      `json:"stack_url"`
+			RoutesURL            string      `json:"routes_url"`
+			EventsURL            string      `json:"events_url"`
+			ServiceBindingsURL   string      `json:"service_bindings_url"`
+			RouteMappingsURL     string      `json:"route_mappings_url"`
+		} `json:"entity"`
+	} `json:"resources"`
+}
+
+func cfAppsRequest(myClient Client, endpoint string) (cfAppsAPIResponse, error) {
+	resp, err := myClient.doGetRequest(endpoint)
+	if err != nil {
+		bailWith("err hitting cf apps endpoint: %s", err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("error reading resp body")
+		return cfAppsAPIResponse{}, err
+	}
+	var responseyDoo cfAppsAPIResponse
+	err = json.Unmarshal(body, &responseyDoo)
+	if err != nil {
+		fmt.Println("error unmarshalling resp body into json")
+		return cfAppsAPIResponse{}, err
+	}
+	return responseyDoo, nil
+}
+
+type cfServiceBindingsAPIResponse struct {
+	TotalResults int         `json:"total_results"`
+	TotalPages   int         `json:"total_pages"`
+	PrevURL      interface{} `json:"prev_url"`
+	NextURL      interface{} `json:"next_url"`
+	Resources    []struct {
+		Metadata struct {
+			GUID      string      `json:"guid"`
+			URL       string      `json:"url"`
+			CreatedAt time.Time   `json:"created_at"`
+			UpdatedAt interface{} `json:"updated_at"`
+		} `json:"metadata"`
+		Entity struct {
+			AppGUID             string `json:"app_guid"`
+			ServiceInstanceGUID string `json:"service_instance_guid"`
+			Credentials         struct {
+				CredsKey100 string `json:"creds-key-100"`
+			} `json:"credentials"`
+			BindingOptions struct {
+			} `json:"binding_options"`
+			GatewayData        interface{} `json:"gateway_data"`
+			GatewayName        string      `json:"gateway_name"`
+			SyslogDrainURL     interface{} `json:"syslog_drain_url"`
+			AppURL             string      `json:"app_url"`
+			ServiceInstanceURL string      `json:"service_instance_url"`
+		} `json:"entity"`
+	} `json:"resources"`
+}
+
+func cfServiceBindingsRequest(myClient Client, endpoint string) (cfServiceBindingsAPIResponse, error) {
+	resp, err := myClient.doGetRequest(endpoint)
+	if err != nil {
+		bailWith("err hitting cf apps endpoint: %s", err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("error reading resp body")
+		return cfServiceBindingsAPIResponse{}, err
+	}
+	var responseyDoo cfServiceBindingsAPIResponse
+	err = json.Unmarshal(body, &responseyDoo)
+	if err != nil {
+		fmt.Println("error unmarshalling resp body into json")
+		return cfServiceBindingsAPIResponse{}, err
 	}
 	return responseyDoo, nil
 }
