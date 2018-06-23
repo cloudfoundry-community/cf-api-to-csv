@@ -27,17 +27,53 @@ func main() {
 	fmt.Println("----- printing orgs -----")
 	fmt.Println(orgs)
 
-	orgs, err = associateAppCreatesWithOrgs(orgs, myClient)
-	if err != nil {
-		bailWith("error associating app creates with orgs: %s", err)
-	}
-	fmt.Println(" ----- printing orgs with app creates -----")
+	//associate app creates with orgs
 	for _, org := range orgs {
-		fmt.Println(" ----- heres ya gross json Alex ----- ")
-		for _, appCreate := range org.associatedAppCreates {
-			fmt.Println(appCreate)
+		jsonResponse, err := cfEventsRequest(myClient, "/v2/events?q=type:audit.app.create&q=organization_guid:"+org.guid)
+		if err != nil {
+			bailWith("error associating app creates with orgs: %s", err)
 		}
+		org.associatedAppCreates = append(org.associatedAppCreates, jsonResponse)
 	}
+
+	fmt.Println(" ----- printing orgs with app creates -----")
+	fmt.Println(orgs)
+
+	//associate app starts with orgs
+	for _, org := range orgs {
+		jsonResponse, err := cfEventsRequest(myClient, "/v2/events?q=type:audit.app.start&q=organization_guid:"+org.guid)
+		if err != nil {
+			bailWith("error associating app starts with orgs: %s", err)
+		}
+		org.associatedAppStarts = append(org.associatedAppStarts, jsonResponse)
+	}
+
+	fmt.Println(" ----- printing orgs with app starts ----- ")
+	fmt.Println(orgs)
+
+	//associate app updates with orgs
+	for _, org := range orgs {
+		jsonResponse, err := cfEventsRequest(myClient, "/v2/events?q=type:audit.app.update&q=organization_guid:"+org.guid)
+		if err != nil {
+			bailWith("error associating app updates with orgs: %s", err)
+		}
+		org.associatedAppUpdates = append(org.associatedAppUpdates, jsonResponse)
+	}
+
+	fmt.Println(" ----- printing orgs with app updates ----- ")
+	fmt.Println(orgs)
+
+	//associate space creates with orgs
+	for _, org := range orgs {
+		jsonResponse, err := cfEventsRequest(myClient, "/v2/events?q=type:audit.space.create&q=organization_guid:"+org.guid)
+		if err != nil {
+			bailWith("error associating space creates with orgs: %s", err)
+		}
+		org.associatedSpaceCreates = append(org.associatedSpaceCreates, jsonResponse)
+	}
+
+	fmt.Println(" ----- printing orgs with space creates ----- ")
+	fmt.Println(orgs)
 
 	spaces, err := getSpaces(myClient)
 	if err != nil {
@@ -46,17 +82,36 @@ func main() {
 	fmt.Println("----- printing spaces -----")
 	fmt.Println(spaces)
 
-	spaces, err = associateAppCreatesWithSpaces(spaces, myClient)
-	if err != nil {
-		bailWith("error associating app creates with spaces: %s", err)
-	}
-	fmt.Println(" ----- printing spaces with app creates -----")
+	//associate app starts with spaces
 	for _, space := range spaces {
-		fmt.Println(" ----- heres ya gross json Alex ----- ")
-		for _, appCreate := range space.associatedAppCreates {
-			fmt.Println(appCreate)
+		jsonResponse, err := cfEventsRequest(myClient, "/v2/events?q=type:audit.app.start&q=space_guid:"+space.guid)
+		if err != nil {
+			bailWith("error associating app starts with spaces: %s", err)
 		}
+		space.associatedAppStarts = append(space.associatedAppStarts, jsonResponse)
 	}
+
+	//associate app creates with spaces
+	for _, space := range spaces {
+		jsonResponse, err := cfEventsRequest(myClient, "/v2/events?q=type:audit.app.create&q=space_guid:"+space.guid)
+		if err != nil {
+			bailWith("error associating app creates with spaces: %s", err)
+		}
+		space.associatedAppCreates = append(space.associatedAppCreates, jsonResponse)
+	}
+	fmt.Println(" ----- printing spaces with app creates ----- ")
+	fmt.Println(spaces)
+
+	//associate app updates with spaces
+	for _, space := range spaces {
+		jsonResponse, err := cfEventsRequest(myClient, "/v2/events?q=type:audit.app.update&q=space_guid:"+space.guid)
+		if err != nil {
+			bailWith("error associating app updates with spaces: %s", err)
+		}
+		space.associatedAppUpdates = append(space.associatedAppUpdates, jsonResponse)
+	}
+	fmt.Println(" ----- printing spaces with app updates ----- ")
+	fmt.Println(spaces)
 	// for {
 	// 	serve()
 	// }
@@ -68,8 +123,8 @@ type Space struct {
 	organizationGUID          string
 	associatedAppCreates      []CFEventsAPIResponse
 	associatedAppStarts       []CFEventsAPIResponse
-	associatedAppUpdates      []*struct{}
-	associatedSpaceCreates    []*struct{}
+	associatedAppUpdates      []CFEventsAPIResponse
+	associatedSpaceCreates    []CFEventsAPIResponse
 	associatedServiceBindings []*struct{}
 }
 
@@ -110,8 +165,8 @@ type Org struct {
 	guid                      string
 	associatedAppCreates      []CFEventsAPIResponse
 	associatedAppStarts       []CFEventsAPIResponse
-	associatedAppUpdates      []*struct{}
-	associatedSpaceCreates    []*struct{}
+	associatedAppUpdates      []CFEventsAPIResponse
+	associatedSpaceCreates    []CFEventsAPIResponse
 	associatedServiceBindings []*struct{}
 }
 
@@ -179,100 +234,27 @@ type CFEventsAPIResponse struct {
 	} `json:"resources"`
 }
 
-func associateAppCreatesWithOrgs(orgs []Org, myClient Client) ([]Org, error) {
-	for index, org := range orgs {
-		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=organization_guid:" + org.guid)
-		if err != nil {
-			bailWith("err getting app creates for orgs: %s", err)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("error reading resp body")
-			return nil, err
-		}
-		var responseyDoo CFEventsAPIResponse
-		err = json.Unmarshal(body, &responseyDoo)
-		if err != nil {
-			fmt.Println("error unmarshalling resp body into json")
-			return nil, err
-		}
-		orgs[index].associatedAppCreates = append(orgs[index].associatedAppCreates, responseyDoo)
+func cfEventsRequest(myClient Client, endpoint string) (CFEventsAPIResponse, error) {
+	resp, err := myClient.doGetRequest(endpoint)
+	if err != nil {
+		bailWith("err hitting cf events endpoint: %s", err)
 	}
-	return orgs, nil
-}
 
-func associateAppCreatesWithSpaces(spaces []Space, myClient Client) ([]Space, error) {
-	for index, space := range spaces {
-		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=space_guid:" + space.guid)
-		if err != nil {
-			bailWith("err getting app creates for spaces: %s", err)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("error reading resp body")
-			return nil, err
-		}
-		var responseyDoo CFEventsAPIResponse
-		err = json.Unmarshal(body, &responseyDoo)
-		if err != nil {
-			fmt.Println("error unmarshalling resp body into json")
-			return nil, err
-		}
-		spaces[index].associatedAppCreates = append(spaces[index].associatedAppCreates, responseyDoo)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("error reading resp body")
+		return CFEventsAPIResponse{}, err
 	}
-	return spaces, nil
-}
-
-func associateAppStartsWithOrgs(orgs []Org, myClient Client) ([]Org, error) {
-	for index, org := range orgs {
-		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.start&q=organization_guid:" + org.guid)
-		if err != nil {
-			bailWith("err getting app starts for orgs: %s", err)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("error reading resp body")
-			return nil, err
-		}
-		var responseyDoo CFEventsAPIResponse
-		err = json.Unmarshal(body, &responseyDoo)
-		if err != nil {
-			fmt.Println("error unmarshalling resp body into json")
-			return nil, err
-		}
-		orgs[index].associatedAppStarts = append(orgs[index].associatedAppStarts, responseyDoo)
+	var responseyDoo CFEventsAPIResponse
+	err = json.Unmarshal(body, &responseyDoo)
+	if err != nil {
+		fmt.Println("error unmarshalling resp body into json")
+		return CFEventsAPIResponse{}, err
 	}
-	return orgs, nil
-}
-
-func associateAppStartsWithSpaces(spaces []Space, myClient Client) ([]Space, error) {
-	for index, space := range spaces {
-		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.start&q=space_guid:" + space.guid)
-		if err != nil {
-			bailWith("err getting app starts for spaces: %s", err)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("error reading resp body")
-			return nil, err
-		}
-		var responseyDoo CFEventsAPIResponse
-		err = json.Unmarshal(body, &responseyDoo)
-		if err != nil {
-			fmt.Println("error unmarshalling resp body into json")
-			return nil, err
-		}
-		spaces[index].associatedAppStarts = append(spaces[index].associatedAppStarts, responseyDoo)
-	}
-	return spaces, nil
+	return responseyDoo, nil
 }
 
 func setup(myClient *Client) error {
-
 	yamlConfig, err := parseConfig("./config.yaml")
 	if err != nil {
 		fmt.Println(err)
