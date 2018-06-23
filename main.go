@@ -66,8 +66,8 @@ type Space struct {
 	name                      string
 	guid                      string
 	organizationGUID          string
-	associatedAppCreates      []createAppResponse
-	associatedAppStarts       []*struct{}
+	associatedAppCreates      []CFEventsAPIResponse
+	associatedAppStarts       []CFEventsAPIResponse
 	associatedAppUpdates      []*struct{}
 	associatedSpaceCreates    []*struct{}
 	associatedServiceBindings []*struct{}
@@ -105,34 +105,11 @@ func getSpaces(myClient Client) ([]Space, error) {
 	return spaces, nil
 }
 
-func associateAppCreatesWithSpaces(spaces []Space, myClient Client) ([]Space, error) {
-	for index, space := range spaces {
-		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=space_guid:" + space.guid)
-		if err != nil {
-			bailWith("err getting app creates for spaces: %s", err)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("error reading resp body")
-			return nil, err
-		}
-		var responseyDoo createAppResponse
-		err = json.Unmarshal(body, &responseyDoo)
-		if err != nil {
-			fmt.Println("error unmarshalling resp body into json")
-			return nil, err
-		}
-		spaces[index].associatedAppCreates = append(spaces[index].associatedAppCreates, responseyDoo)
-	}
-	return spaces, nil
-}
-
 type Org struct {
 	name                      string
 	guid                      string
-	associatedAppCreates      []createAppResponse
-	associatedAppStarts       []*struct{}
+	associatedAppCreates      []CFEventsAPIResponse
+	associatedAppStarts       []CFEventsAPIResponse
 	associatedAppUpdates      []*struct{}
 	associatedSpaceCreates    []*struct{}
 	associatedServiceBindings []*struct{}
@@ -168,7 +145,7 @@ func getOrgs(myClient Client) ([]Org, error) {
 	return orgs, nil
 }
 
-type createAppResponse struct {
+type CFEventsAPIResponse struct {
 	Resources []struct {
 		Metadata struct {
 			GUID      string    `json:"guid"`
@@ -214,7 +191,7 @@ func associateAppCreatesWithOrgs(orgs []Org, myClient Client) ([]Org, error) {
 			fmt.Println("error reading resp body")
 			return nil, err
 		}
-		var responseyDoo createAppResponse
+		var responseyDoo CFEventsAPIResponse
 		err = json.Unmarshal(body, &responseyDoo)
 		if err != nil {
 			fmt.Println("error unmarshalling resp body into json")
@@ -223,6 +200,75 @@ func associateAppCreatesWithOrgs(orgs []Org, myClient Client) ([]Org, error) {
 		orgs[index].associatedAppCreates = append(orgs[index].associatedAppCreates, responseyDoo)
 	}
 	return orgs, nil
+}
+
+func associateAppCreatesWithSpaces(spaces []Space, myClient Client) ([]Space, error) {
+	for index, space := range spaces {
+		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=space_guid:" + space.guid)
+		if err != nil {
+			bailWith("err getting app creates for spaces: %s", err)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("error reading resp body")
+			return nil, err
+		}
+		var responseyDoo CFEventsAPIResponse
+		err = json.Unmarshal(body, &responseyDoo)
+		if err != nil {
+			fmt.Println("error unmarshalling resp body into json")
+			return nil, err
+		}
+		spaces[index].associatedAppCreates = append(spaces[index].associatedAppCreates, responseyDoo)
+	}
+	return spaces, nil
+}
+
+func associateAppStartsWithOrgs(orgs []Org, myClient Client) ([]Org, error) {
+	for index, org := range orgs {
+		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.start&q=organization_guid:" + org.guid)
+		if err != nil {
+			bailWith("err getting app starts for orgs: %s", err)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("error reading resp body")
+			return nil, err
+		}
+		var responseyDoo CFEventsAPIResponse
+		err = json.Unmarshal(body, &responseyDoo)
+		if err != nil {
+			fmt.Println("error unmarshalling resp body into json")
+			return nil, err
+		}
+		orgs[index].associatedAppStarts = append(orgs[index].associatedAppStarts, responseyDoo)
+	}
+	return orgs, nil
+}
+
+func associateAppStartsWithSpaces(spaces []Space, myClient Client) ([]Space, error) {
+	for index, space := range spaces {
+		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.start&q=space_guid:" + space.guid)
+		if err != nil {
+			bailWith("err getting app starts for spaces: %s", err)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("error reading resp body")
+			return nil, err
+		}
+		var responseyDoo CFEventsAPIResponse
+		err = json.Unmarshal(body, &responseyDoo)
+		if err != nil {
+			fmt.Println("error unmarshalling resp body into json")
+			return nil, err
+		}
+		spaces[index].associatedAppStarts = append(spaces[index].associatedAppStarts, responseyDoo)
+	}
+	return spaces, nil
 }
 
 func setup(myClient *Client) error {
