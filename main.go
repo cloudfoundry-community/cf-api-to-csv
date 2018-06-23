@@ -14,16 +14,6 @@ import (
 	ansi "github.com/jhunt/go-ansi"
 )
 
-type Org struct {
-	name                      string
-	guid                      string
-	associatedAppCreates      []createAppResponse
-	associatedAppStarts       []*struct{}
-	associatedAppUpdates      []*struct{}
-	associatedSpaceCreates    []*struct{}
-	associatedServiceBindings []*struct{}
-}
-
 func main() {
 	myClient := Client{}
 	err := setup(&myClient)
@@ -42,7 +32,6 @@ func main() {
 		bailWith("error associating app creates with orgs: %s", err)
 	}
 	fmt.Println(" ----- printing orgs with app creates -----")
-	fmt.Println(orgs)
 	for _, org := range orgs {
 		fmt.Println(" ----- heres ya gross json Alex ----- ")
 		for _, appCreate := range org.associatedAppCreates {
@@ -50,64 +39,104 @@ func main() {
 		}
 	}
 
+	spaces, err := getSpaces(myClient)
+	if err != nil {
+		bailWith("error getting spaces: %s", err)
+	}
+	fmt.Println("----- printing spaces -----")
+	fmt.Println(spaces)
+
+	spaces, err = associateAppCreatesWithSpaces(spaces, myClient)
+	if err != nil {
+		bailWith("error associating app creates with spaces: %s", err)
+	}
+	fmt.Println(" ----- printing spaces with app creates -----")
+	for _, space := range spaces {
+		fmt.Println(" ----- heres ya gross json Alex ----- ")
+		for _, appCreate := range space.associatedAppCreates {
+			fmt.Println(appCreate)
+		}
+	}
+	// for {
+	// 	serve()
+	// }
 }
 
-//loop through all of the resources
-// for index, resource := range response.Resources {
-// 	if val, ok := orgs[resource.Entity.OrganizationGUID]; !ok {
-// 		//orgs doesn't contain the current org so add it
-// 		orgs[resource.Entity.OrganizationGUID] = &resource
-// 	}
-// 	if val, ok = orgs[resource.Entity.SpaceGUID]; !ok {
-// 		spaces[resource.Entity.SpaceGUID] = &resource
-// 	}
-// 	resource.Entity.SpaceGUID
-// 	resource.Entity.ActorName
-// }
+type Space struct {
+	name                      string
+	guid                      string
+	organizationGUID          string
+	associatedAppCreates      []createAppResponse
+	associatedAppStarts       []*struct{}
+	associatedAppUpdates      []*struct{}
+	associatedSpaceCreates    []*struct{}
+	associatedServiceBindings []*struct{}
+}
 
-// resp, err = myClient.doGetRequest("/v2/events?q=type:audit.app.start")
-// if err != nil {
-// 	bailWith("err getting app starts: %s", err)
-// }
-// body, err = ioutil.ReadAll(resp.Body)
-// if err != nil {
-// 	bailWith("err reading resp body: %s", err)
-// }
-// fmt.Println(string(body))
+func getSpaces(myClient Client) ([]Space, error) {
+	spaces := []Space{}
+	resp, err := myClient.doGetRequest("/v2/spaces")
+	var in struct {
+		Resources []struct {
+			Metadata struct {
+				GUID string `json:"guid"`
+			} `json:"metadata"`
+			Entity struct {
+				Name             string `json:"name"`
+				OrganizationGUID string `json:"organization_guid"`
+			} `json:"entity"`
+		} `json:"resources"`
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, &in)
+	if err != nil {
+		return nil, err
+	}
 
-// resp, err = myClient.doGetRequest("/v2/events?q=type:audit.space.create")
-// if err != nil {
-// 	bailWith("err getting space creations: %s", err)
-// }
-// body, err = ioutil.ReadAll(resp.Body)
-// if err != nil {
-// 	bailWith("err reading resp body: %s", err)
-// }
-// fmt.Println(string(body))
+	for index, resource := range in.Resources {
+		spaces = append(spaces, Space{})
+		spaces[index].name = resource.Entity.Name
+		spaces[index].organizationGUID = resource.Entity.OrganizationGUID
+		spaces[index].guid = resource.Metadata.GUID
+	}
+	return spaces, nil
+}
 
-// resp, err = myClient.doGetRequest("/v2/events?q=type:audit.app.update")
-// if err != nil {
-// 	bailWith("err getting app updates: %s", err)
-// }
-// body, err = ioutil.ReadAll(resp.Body)
-// if err != nil {
-// 	bailWith("err reading resp body: %s", err)
-// }
-// fmt.Println(string(body))
+func associateAppCreatesWithSpaces(spaces []Space, myClient Client) ([]Space, error) {
+	for index, space := range spaces {
+		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=space_guid:" + space.guid)
+		if err != nil {
+			bailWith("err getting app creates for spaces: %s", err)
+		}
 
-// resp, err = myClient.doGetRequest("/v2/service_bindings")
-// if err != nil {
-// 	bailWith("err getting service bindings %s", err)
-// }
-// body, err = ioutil.ReadAll(resp.Body)
-// if err != nil {
-// 	bailWith("err reading resp body: %s", err)
-// }
-// fmt.Println(string(body))
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("error reading resp body")
+			return nil, err
+		}
+		var responseyDoo createAppResponse
+		err = json.Unmarshal(body, &responseyDoo)
+		if err != nil {
+			fmt.Println("error unmarshalling resp body into json")
+			return nil, err
+		}
+		spaces[index].associatedAppCreates = append(spaces[index].associatedAppCreates, responseyDoo)
+	}
+	return spaces, nil
+}
 
-// for {
-// 	serve()
-// }
+type Org struct {
+	name                      string
+	guid                      string
+	associatedAppCreates      []createAppResponse
+	associatedAppStarts       []*struct{}
+	associatedAppUpdates      []*struct{}
+	associatedSpaceCreates    []*struct{}
+	associatedServiceBindings []*struct{}
+}
 
 func getOrgs(myClient Client) ([]Org, error) {
 	orgs := []Org{}
@@ -175,9 +204,9 @@ type createAppResponse struct {
 
 func associateAppCreatesWithOrgs(orgs []Org, myClient Client) ([]Org, error) {
 	for index, org := range orgs {
-		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=organization_guid:" + org.name)
+		resp, err := myClient.doGetRequest("/v2/events?q=type:audit.app.create&q=organization_guid:" + org.guid)
 		if err != nil {
-			bailWith("err getting app creates: %s", err)
+			bailWith("err getting app creates for orgs: %s", err)
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
