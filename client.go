@@ -9,8 +9,6 @@ import (
 	"net/url"
 	"os"
 	"time"
-
-	"github.com/cloudfoundry-community/go-cfclient"
 )
 
 //Client is a struct containing all of the basic parts to make API requests to the Cloud Foundry API
@@ -18,7 +16,6 @@ type Client struct {
 	authToken  string
 	apiURL     *url.URL
 	httpClient *http.Client
-	cfClient   *cfclient.Client
 }
 
 type space struct {
@@ -45,7 +42,10 @@ type org struct {
 }
 
 func (client *Client) setup() error {
+	//old way with yaml parsing
 	yamlConfig, err := parseConfig("./config.yaml")
+
+	myConf, err := GrabToken()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -53,21 +53,9 @@ func (client *Client) setup() error {
 
 	//fmt.Printf("yaml config parsed: %v \n", *yamlConfig)
 
-	goCFConfig := &cfclient.Config{
-		ApiAddress:        yamlConfig.APIAddress,
-		Username:          yamlConfig.Username,
-		Password:          yamlConfig.Password,
-		SkipSslValidation: true,
-	}
-
-	goCFClient, err := cfclient.NewClient(goCFConfig)
+	token := myConf.AccessToken
 	if err != nil {
-		fmt.Println("error creating cfclient")
-		return err
-	}
-	token, err := goCFClient.GetToken()
-	if err != nil {
-		fmt.Println("error getting token fron cfclient")
+		fmt.Println("error getting token")
 		return err
 	}
 	tmpURL, err := url.Parse(yamlConfig.APIAddress)
@@ -78,7 +66,6 @@ func (client *Client) setup() error {
 	client.authToken = token
 	client.apiURL = tmpURL
 	client.httpClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyFromEnvironment, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	client.cfClient = goCFClient
 
 	return nil
 }

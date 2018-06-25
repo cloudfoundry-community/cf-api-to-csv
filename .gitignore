@@ -18,3 +18,4 @@ orgs.json
 spaces.json
 cf-metrics-darwin
 cf-metrics-linux
+config.yaml

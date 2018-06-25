@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -33,4 +34,19 @@ func parseConfig(path string) (*Config, error) {
 	}
 
 	return conf, nil
+}
+
+type cfConfig struct {
+	AccessToken, RefreshToken string
+}
+
+func GrabToken() (*cfConfig, error) {
+	file, err := os.Open(os.Getenv("HOME") + "/.cf/config.json")
+	if err != nil {
+		return nil, err
+	}
+	decoder := json.NewDecoder(file)
+	var config cfConfig
+	decoder.Decode(&config)
+	return &config, nil
 }
