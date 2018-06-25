@@ -16,3 +16,5 @@ cf-metrics
 *.yml
 orgs.json
 spaces.json
+cf-metrics-darwin
+cf-metrics-linux
