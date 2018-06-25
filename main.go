@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	ansi "github.com/jhunt/go-ansi"
@@ -171,9 +173,39 @@ func main() {
 	// for {
 	// 	serve()
 	// }
+	err = printAsJSON("orgs.json", orgs)
+	if err != nil {
+		bailWith("error writing orgs to file %s", err)
+	}
+	err = printAsJSON("spaces.json", spaces)
+	if err != nil {
+		bailWith("error writing spaces to file %s", err)
+	}
 }
 
 func bailWith(f string, a ...interface{}) {
 	ansi.Fprintf(os.Stderr, fmt.Sprintf("@R{%s}\n", f), a...)
 	os.Exit(1)
+}
+
+func printAsJSON(fileName string, data interface{}) error {
+	output, err := json.Marshal(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create(fileName)
+	if err != nil {
+		fmt.Println("error creating file")
+		return err
+	}
+	defer file.Close()
+
+	bytesWritten, err := file.Write(output)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	fmt.Printf("Wrote %d bytes.\n", bytesWritten)
+	return nil
 }
