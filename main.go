@@ -24,55 +24,82 @@ func main() {
 	//associate app creates with orgs
 	for index, org := range orgs {
 		response := eventsAPIResponse{}
-		jsonResponse, err := client.cfAPIRequest("/v2/events?q=type:audit.app.create&q=organization_guid:"+org.guid, &response)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.create&q=organization_guid:"+org.guid, &response)
 		if err != nil {
 			bailWith("error associating app creates with orgs: %s", err)
 		}
-		orgs[index].associatedAppCreates = jsonResponse
+		resourceList, err := client.cfEventsResourcesFromResponse(response)
+		if err != nil {
+			bailWith("error getting resources out of api response %s", err)
+		}
+		fmt.Println("printing resources")
+		fmt.Println(resourceList)
+		orgs[index].associatedAppCreates = resourceList
 	}
 
 	//associate app starts with orgs
 	for index, org := range orgs {
-		jsonResponse, err := cfEventsRequest(client, "/v2/events?q=type:audit.app.start&q=organization_guid:"+org.guid)
+		returnStruct := eventsAPIResponse{}
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.start&q=organization_guid:"+org.guid, &returnStruct)
 		if err != nil {
 			bailWith("error associating app starts with orgs: %s", err)
 		}
-		orgs[index].associatedAppStarts = jsonResponse
+		responseList, err := client.cfEventsResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating app starts with orgs %s", err)
+		}
+		orgs[index].associatedAppStarts = responseList
 	}
 
 	//associate app updates with orgs
 	for index, org := range orgs {
-		jsonResponse, err := cfEventsRequest(client, "/v2/events?q=type:audit.app.update&q=organization_guid:"+org.guid)
+		returnStruct := eventsAPIResponse{}
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.update&q=organization_guid:"+org.guid, &returnStruct)
 		if err != nil {
 			bailWith("error associating app updates with orgs: %s", err)
 		}
-		orgs[index].associatedAppUpdates = jsonResponse
+		responseList, err := client.cfEventsResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating app updates with orgs %s", err)
+		}
+		orgs[index].associatedAppStarts = responseList
 	}
 
 	//associate space creates with orgs
 	for index, org := range orgs {
-		jsonResponse, err := cfEventsRequest(client, "/v2/events?q=type:audit.space.create&q=organization_guid:"+org.guid)
+		returnStruct := eventsAPIResponse{}
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.space.create&q=organization_guid:"+org.guid, &returnStruct)
 		if err != nil {
 			bailWith("error associating space creates with orgs: %s", err)
 		}
-		orgs[index].associatedSpaceCreates = jsonResponse
+		responseList, err := client.cfEventsResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating space creates with orgs %s", err)
+		}
+		orgs[index].associatedAppStarts = responseList
 	}
 
 	//get all apps based on org
 	for index, org := range orgs {
-		jsonResponse, err := cfAppsRequest(client, "/v2/apps?q=organization_guid:"+org.guid)
+		returnStruct := appsAPIResponse{}
+		err := client.cfAppsAPIRequest("/v2/apps?q=organization_guid:"+org.guid, &returnStruct)
 		if err != nil {
 			bailWith("error associating apps with orgs: %s", err)
 		}
-		orgs[index].apps = jsonResponse.Resources
-	}
-
-	for index, org := range orgs {
-		for index, app := range orgs[index].apps {
-			jsonResponse, err := cfAppsRequest(client, "/v2/service_bindings?q=app_guid:"+orgs[index].apps[index].apps.guid)
-
+		responseList, err := client.cfAppsResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating apps with orgs: %s", err)
 		}
+		orgs[index].apps = responseList
 	}
+
+	//some app stuff for later?
+	// for index, org := range orgs {
+	// 	for index, app := range orgs[index].apps {
+	// 		jsonResponse, err := cfAppsAPIRequest(client, "/v2/service_bindings?q=app_guid:"+orgs[index].apps[index].apps.guid)
+
+	// 	}
+	// }
 
 	//get all service bindings based on apps by org
 
@@ -81,7 +108,7 @@ func main() {
 	fmt.Printf("\n\n\n\n\n")
 
 	//grab all the spaces
-	spaces, err := getSpaces(client)
+	spaces, err := client.getSpaces()
 	if err != nil {
 		bailWith("error getting spaces: %s", err)
 	}
@@ -93,29 +120,44 @@ func main() {
 
 	//associate app starts with spaces
 	for index, space := range spaces {
-		jsonResponse, err := cfEventsRequest(client, "/v2/events?q=type:audit.app.start&q=space_guid:"+space.guid)
+		returnStruct := eventsAPIResponse{}
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.start&q=space_guid:"+space.guid, &returnStruct)
 		if err != nil {
-			bailWith("error associating app starts with spaces: %s", err)
+			bailWith("error associating space creates with orgs: %s", err)
 		}
-		spaces[index].associatedAppStarts = jsonResponse
+		responseList, err := client.cfEventsResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating space creates with orgs %s", err)
+		}
+		orgs[index].associatedAppStarts = responseList
 	}
 
 	//associate app creates with spaces
 	for index, space := range spaces {
-		jsonResponse, err := cfEventsRequest(client, "/v2/events?q=type:audit.app.create&q=space_guid:"+space.guid)
+		returnStruct := eventsAPIResponse{}
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.create&q=space_guid:"+space.guid, &returnStruct)
 		if err != nil {
-			bailWith("error associating app creates with spaces: %s", err)
+			bailWith("error associating space creates with orgs: %s", err)
 		}
-		spaces[index].associatedAppCreates = jsonResponse
+		responseList, err := client.cfEventsResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating space creates with orgs %s", err)
+		}
+		orgs[index].associatedAppStarts = responseList
 	}
 
 	//associate app updates with spaces
 	for index, space := range spaces {
-		jsonResponse, err := cfEventsRequest(client, "/v2/events?q=type:audit.app.update&q=space_guid:"+space.guid)
+		returnStruct := eventsAPIResponse{}
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.update&q=space_guid:"+space.guid, &returnStruct)
 		if err != nil {
-			bailWith("error associating app updates with spaces: %s", err)
+			bailWith("error associating space creates with orgs: %s", err)
 		}
-		spaces[index].associatedAppUpdates = jsonResponse
+		responseList, err := client.cfEventsResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating space creates with orgs %s", err)
+		}
+		orgs[index].associatedAppStarts = responseList
 	}
 
 	fmt.Printf("\n\n\n\n\n")
