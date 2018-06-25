@@ -26,7 +26,7 @@ func main() {
 	//associate app creates with orgs
 	for index, org := range orgs {
 		var response eventsAPIResponse
-		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.create&q=organization_guid:"+org.guid, &response)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.create&q=organization_guid:"+org.GUID, &response)
 		if err != nil {
 			bailWith("error associating app creates with orgs: %s", err)
 		}
@@ -34,13 +34,13 @@ func main() {
 		if err != nil {
 			bailWith("error getting resources out of api response %s", err)
 		}
-		orgs[index].associatedAppCreates = resourceList
+		orgs[index].AssociatedAppCreates = resourceList
 	}
 
 	//associate app starts with orgs
 	for index, org := range orgs {
 		var returnStruct eventsAPIResponse
-		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.start&q=organization_guid:"+org.guid, &returnStruct)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.start&q=organization_guid:"+org.GUID, &returnStruct)
 		if err != nil {
 			bailWith("error associating app starts with orgs: %s", err)
 		}
@@ -48,13 +48,13 @@ func main() {
 		if err != nil {
 			bailWith("error getting resources out of api resp %s", err)
 		}
-		orgs[index].associatedAppStarts = responseList
+		orgs[index].AssociatedAppStarts = responseList
 	}
 
 	//associate app updates with orgs
 	for index, org := range orgs {
 		var returnStruct eventsAPIResponse
-		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.update&q=organization_guid:"+org.guid, &returnStruct)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.update&q=organization_guid:"+org.GUID, &returnStruct)
 		if err != nil {
 			bailWith("error associating app updates with orgs: %s", err)
 		}
@@ -62,13 +62,13 @@ func main() {
 		if err != nil {
 			bailWith("error associating app updates with orgs %s", err)
 		}
-		orgs[index].associatedAppStarts = responseList
+		orgs[index].AssociatedAppStarts = responseList
 	}
 
 	//associate space creates with orgs
 	for index, org := range orgs {
 		var returnStruct eventsAPIResponse
-		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.space.create&q=organization_guid:"+org.guid, &returnStruct)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.space.create&q=organization_guid:"+org.GUID, &returnStruct)
 		if err != nil {
 			bailWith("error associating space creates with orgs: %s", err)
 		}
@@ -76,13 +76,13 @@ func main() {
 		if err != nil {
 			bailWith("error associating space creates with orgs %s", err)
 		}
-		orgs[index].associatedAppStarts = responseList
+		orgs[index].AssociatedAppStarts = responseList
 	}
 
 	//get all apps based on org
 	for index, org := range orgs {
 		var returnStruct appsAPIResponse
-		err := client.cfAppsAPIRequest("/v2/apps?q=organization_guid:"+org.guid, &returnStruct)
+		err := client.cfAppsAPIRequest("/v2/apps?q=organization_guid:"+org.GUID, &returnStruct)
 		if err != nil {
 			bailWith("error associating apps with orgs: %s", err)
 		}
@@ -90,7 +90,7 @@ func main() {
 		if err != nil {
 			bailWith("error associating apps with orgs: %s", err)
 		}
-		orgs[index].apps = responseList
+		orgs[index].Apps = responseList
 	}
 
 	//some app stuff for later?
@@ -121,7 +121,7 @@ func main() {
 	//associate app starts with spaces
 	for index, space := range spaces {
 		var returnStruct eventsAPIResponse
-		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.start&q=space_guid:"+space.guid, &returnStruct)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.start&q=space_guid:"+space.GUID, &returnStruct)
 		if err != nil {
 			bailWith("error associating app starts with spaces: %s", err)
 		}
@@ -129,13 +129,13 @@ func main() {
 		if err != nil {
 			bailWith("error associating app starts with spaces %s", err)
 		}
-		spaces[index].associatedAppStarts = responseList
+		spaces[index].AssociatedAppStarts = responseList
 	}
 
 	//associate app creates with spaces
 	for index, space := range spaces {
 		var returnStruct eventsAPIResponse
-		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.create&q=space_guid:"+space.guid, &returnStruct)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.create&q=space_guid:"+space.GUID, &returnStruct)
 		if err != nil {
 			bailWith("error associating app creates with spaces: %s", err)
 		}
@@ -143,13 +143,13 @@ func main() {
 		if err != nil {
 			bailWith("error associating app creates with spaces %s", err)
 		}
-		spaces[index].associatedAppStarts = responseList
+		spaces[index].AssociatedAppStarts = responseList
 	}
 
 	//associate app updates with spaces
 	for index, space := range spaces {
 		var returnStruct eventsAPIResponse
-		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.update&q=space_guid:"+space.guid, &returnStruct)
+		err := client.cfEventsAPIRequest("/v2/events?q=type:audit.app.update&q=space_guid:"+space.GUID, &returnStruct)
 		if err != nil {
 			bailWith("error associating app updates with spaces: %s", err)
 		}
@@ -157,7 +157,7 @@ func main() {
 		if err != nil {
 			bailWith("error associating app updates with spaces %s", err)
 		}
-		spaces[index].associatedAppStarts = responseList
+		spaces[index].AssociatedAppStarts = responseList
 	}
 
 	fmt.Printf("\n\n\n\n\n")

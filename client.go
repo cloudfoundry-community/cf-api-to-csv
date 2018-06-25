@@ -22,26 +22,26 @@ type Client struct {
 }
 
 type space struct {
-	name                      string
-	guid                      string
-	organizationGUID          string
-	apps                      []appsResource
-	associatedAppCreates      []eventsResource
-	associatedAppStarts       []eventsResource
-	associatedAppUpdates      []eventsResource
-	associatedSpaceCreates    []eventsResource
-	associatedServiceBindings []serviceBindingsResource
+	Name                      string
+	GUID                      string
+	OrganizationGUID          string
+	Apps                      []appsResource
+	AssociatedAppCreates      []eventsResource
+	AssociatedAppStarts       []eventsResource
+	AssociatedAppUpdates      []eventsResource
+	AssociatedSpaceCreates    []eventsResource
+	AssociatedServiceBindings []serviceBindingsResource
 }
 
 type org struct {
-	name                      string
-	guid                      string
-	apps                      []appsResource
-	associatedAppCreates      []eventsResource
-	associatedAppStarts       []eventsResource
-	associatedAppUpdates      []eventsResource
-	associatedSpaceCreates    []eventsResource
-	associatedServiceBindings []serviceBindingsResource
+	Name                      string
+	GUID                      string
+	Apps                      []appsResource
+	AssociatedAppCreates      []eventsResource
+	AssociatedAppStarts       []eventsResource
+	AssociatedAppUpdates      []eventsResource
+	AssociatedSpaceCreates    []eventsResource
+	AssociatedServiceBindings []serviceBindingsResource
 }
 
 func (client *Client) setup() error {
@@ -128,8 +128,8 @@ func (client *Client) getOrgs() ([]org, error) {
 
 	for index, resource := range in.Resources {
 		orgs = append(orgs, org{})
-		orgs[index].name = resource.Entity.Name
-		orgs[index].guid = resource.Metadata.GUID
+		orgs[index].Name = resource.Entity.Name
+		orgs[index].GUID = resource.Metadata.GUID
 	}
 	return orgs, nil
 }
@@ -159,9 +159,9 @@ func (client *Client) getSpaces() ([]space, error) {
 
 	for index, resource := range in.Resources {
 		spaces = append(spaces, space{})
-		spaces[index].name = resource.Entity.Name
-		spaces[index].organizationGUID = resource.Entity.OrganizationGUID
-		spaces[index].guid = resource.Metadata.GUID
+		spaces[index].Name = resource.Entity.Name
+		spaces[index].OrganizationGUID = resource.Entity.OrganizationGUID
+		spaces[index].GUID = resource.Metadata.GUID
 	}
 	return spaces, nil
 }
