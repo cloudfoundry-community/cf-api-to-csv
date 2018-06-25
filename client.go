@@ -105,7 +105,7 @@ func (client *Client) doGetRequest(path string) (*http.Response, error) {
 }
 
 func (client *Client) getOrgs() ([]org, error) {
-	orgs := []org{}
+	var orgs []org
 	resp, err := client.doGetRequest("/v2/organizations")
 	var in struct {
 		Resources []struct {
@@ -135,7 +135,7 @@ func (client *Client) getOrgs() ([]org, error) {
 }
 
 func (client *Client) getSpaces() ([]space, error) {
-	spaces := []space{}
+	var spaces []space
 	resp, err := client.doGetRequest("/v2/spaces")
 	var in struct {
 		Resources []struct {
@@ -176,7 +176,7 @@ func (client *Client) cfServiceBindingsAPIRequest(endpoint string, returnStruct 
 		fmt.Println("error reading resp body")
 		return err
 	}
-	err = json.Unmarshal(body, *returnStruct)
+	err = json.Unmarshal(body, returnStruct)
 	if err != nil {
 		fmt.Println("error unmarshalling resp body into json")
 		return err
@@ -194,7 +194,7 @@ func (client *Client) cfEventsAPIRequest(endpoint string, returnStruct *eventsAP
 		fmt.Println("error reading resp body")
 		return err
 	}
-	err = json.Unmarshal(body, *returnStruct)
+	err = json.Unmarshal(body, returnStruct)
 	if err != nil {
 		fmt.Println("error unmarshalling resp body into json")
 		return err
@@ -212,7 +212,7 @@ func (client *Client) cfAppsAPIRequest(endpoint string, returnStruct *appsAPIRes
 		fmt.Println("error reading resp body")
 		return err
 	}
-	err = json.Unmarshal(body, *returnStruct)
+	err = json.Unmarshal(body, returnStruct)
 	if err != nil {
 		fmt.Println("error unmarshalling resp body into json")
 		return err
@@ -272,7 +272,7 @@ type appsResource struct {
 
 func (client *Client) cfAppsResourcesFromResponse(response appsAPIResponse) ([]appsResource, error) {
 	totalPages := response.TotalPages
-	resourceList := []appsResource{}
+	var resourceList []appsResource
 	for i := 0; i < totalPages; i++ {
 		for _, resource := range response.Resources {
 			resourceList = append(resourceList, resource)
@@ -358,7 +358,7 @@ type serviceBindingsResource struct {
 
 func (client *Client) cfServiceBindingsResourcesFromResponse(response serviceBindingsAPIResponse) ([]serviceBindingsResource, error) {
 	totalPages := response.TotalPages
-	resourceList := []serviceBindingsResource{}
+	var resourceList []serviceBindingsResource
 	for i := 0; i < totalPages; i++ {
 		for _, resource := range response.Resources {
 			resourceList = append(resourceList, resource)
