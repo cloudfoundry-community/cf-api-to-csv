@@ -43,7 +43,6 @@ type org struct {
 
 func (client *Client) setup() error {
 	//old way with yaml parsing
-	yamlConfig, err := parseConfig("./config.yaml")
 
 	myConf, err := GrabToken()
 	if err != nil {
@@ -58,9 +57,9 @@ func (client *Client) setup() error {
 		fmt.Println("error getting token")
 		return err
 	}
-	tmpURL, err := url.Parse(yamlConfig.APIAddress)
+	tmpURL, err := url.Parse(myConf.Target)
 	if err != nil {
-		fmt.Println("error parsing yaml config api address into URL")
+		fmt.Println("error parsing config api address into URL")
 		return err
 	}
 	client.authToken = token

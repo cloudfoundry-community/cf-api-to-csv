@@ -37,7 +37,7 @@ func parseConfig(path string) (*Config, error) {
 }
 
 type cfConfig struct {
-	AccessToken, RefreshToken string
+	AccessToken, RefreshToken, Target string
 }
 
 func GrabToken() (*cfConfig, error) {
@@ -47,6 +47,9 @@ func GrabToken() (*cfConfig, error) {
 	}
 	decoder := json.NewDecoder(file)
 	var config cfConfig
-	decoder.Decode(&config)
-	return &config, nil
+	err = decoder.Decode(&config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, err
 }
