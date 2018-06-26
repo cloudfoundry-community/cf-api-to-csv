@@ -13,9 +13,7 @@ cf-metrics
 *.out
 
 #configuration data
-*.yml
 orgs.json
 spaces.json
 cf-metrics-darwin
 cf-metrics-linux
-config.yaml
