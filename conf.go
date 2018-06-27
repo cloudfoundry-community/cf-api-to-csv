@@ -36,18 +36,20 @@ func parseConfig(path string) (*Config, error) {
 	return conf, nil
 }
 
-type cfConfig struct {
-	AccessToken, RefreshToken, Target string
+type cfCLIConfig struct {
+	AccessToken  string `json:"AccessToken"`
+	RefreshToken string `json:"RefreshToken"`
+	Target       string `json:"Target"`
 }
 
-func GrabToken() (*cfConfig, error) {
-	file, err := os.Open(os.Getenv("HOME") + "/.cf/config.json")
+func GrabCFCLIENV() (*cfCLIConfig, error) {
+
+	raw, err := ioutil.ReadFile(os.Getenv("HOME") + "/.cf/config.json")
 	if err != nil {
 		return nil, err
 	}
-	decoder := json.NewDecoder(file)
-	var config cfConfig
-	err = decoder.Decode(&config)
+	var config cfCLIConfig
+	err = json.Unmarshal(raw, &config)
 	if err != nil {
 		return nil, err
 	}
