@@ -19,9 +19,6 @@ func main() {
 	if err != nil {
 		bailWith("error getting orgs: %s", err)
 	}
-	fmt.Printf("\n\n\n\n\n")
-	fmt.Println("orgs before processing", orgs)
-	fmt.Printf("\n\n\n\n\n")
 
 	//associate app creates with orgs
 	for index, org := range orgs {
@@ -62,6 +59,10 @@ func main() {
 		if err != nil {
 			bailWith("error associating app updates with orgs %s", err)
 		}
+
+		for _, v := range responseList {
+			sanitizeEvents(&v)
+		}
 		orgs[index].AssociatedAppStarts = responseList
 	}
 
@@ -76,6 +77,7 @@ func main() {
 		if err != nil {
 			bailWith("error associating space creates with orgs %s", err)
 		}
+
 		orgs[index].AssociatedAppStarts = responseList
 	}
 
@@ -90,6 +92,10 @@ func main() {
 		if err != nil {
 			bailWith("error associating apps with orgs: %s", err)
 		}
+
+		for _, v := range responseList {
+			sanitizeApps(&v)
+		}
 		orgs[index].Apps = responseList
 	}
 
@@ -103,20 +109,11 @@ func main() {
 
 	//get all service bindings based on apps by org
 
-	fmt.Printf("\n\n\n\n\n")
-	fmt.Println("orgs after data processing:", orgs)
-	fmt.Printf("\n\n\n\n\n")
-
 	//grab all the spaces
 	spaces, err := client.getSpaces()
 	if err != nil {
 		bailWith("error getting spaces: %s", err)
 	}
-
-	fmt.Printf("\n\n\n\n\n")
-	fmt.Printf("spaces before data processing\n")
-	fmt.Println(spaces)
-	fmt.Printf("\n\n\n\n\n")
 
 	//associate app starts with spaces
 	for index, space := range spaces {
@@ -157,13 +154,13 @@ func main() {
 		if err != nil {
 			bailWith("error associating app updates with spaces %s", err)
 		}
+
+		for _, v := range responseList {
+			sanitizeEvents(&v)
+		}
+
 		spaces[index].AssociatedAppStarts = responseList
 	}
-
-	fmt.Printf("\n\n\n\n\n")
-	fmt.Printf("spaces after data processing\n")
-	fmt.Println(spaces)
-	fmt.Printf("\n\n\n\n\n")
 
 	//get all apps based on spaces
 
@@ -208,4 +205,42 @@ func printAsJSON(fileName string, data interface{}) error {
 	}
 	fmt.Printf("Wrote %d bytes.\n", bytesWritten)
 	return nil
+}
+
+func sanitizeApps(v *cfAPIResource) {
+	m, isMap := v.Entity.(map[string]interface{})
+	if !isMap {
+		panic("entity isn't a map!")
+	}
+
+	delete(m, "environment_json")
+}
+
+func sanitizeEvents(v *cfAPIResource) {
+	m, isMap := v.Entity.(map[string]interface{})
+	if !isMap {
+		panic("entity isn't a map!")
+	}
+
+	meta, exists := m["metadata"]
+	if !exists {
+		panic("no metadata in events entity")
+	}
+
+	metaMap, isMap := meta.(map[string]interface{})
+	if !isMap {
+		panic("metadata isn't a map")
+	}
+
+	request, exists := metaMap["request"]
+	if !exists {
+		panic("no request in events metadata")
+	}
+
+	reqMap, isMap := request.(map[string]interface{})
+	if !isMap {
+		panic("request isn't a map")
+	}
+
+	delete(reqMap, "environment_json")
 }

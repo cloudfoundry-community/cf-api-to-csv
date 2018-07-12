@@ -37,9 +37,12 @@ func parseConfig(path string) (*Config, error) {
 }
 
 type cfCLIConfig struct {
-	AccessToken  string `json:"AccessToken"`
-	RefreshToken string `json:"RefreshToken"`
-	Target       string `json:"Target"`
+	AccessToken     string `json:"AccessToken"`
+	RefreshToken    string `json:"RefreshToken"`
+	Target          string `json:"Target"`
+	UAAEndpoint     string `json:"UaaEndpoint"`
+	UAAClientID     string `json:"UAAOAuthClient"`
+	UAAClientSecret string `json:"UAAOAuthClientSecret"`
 }
 
 func GrabCFCLIENV() (*cfCLIConfig, error) {
