@@ -22,27 +22,16 @@ type Client struct {
 	httpClient   *http.Client
 }
 
-type space struct {
-	Name                      string
-	GUID                      string
-	OrganizationGUID          string
-	Apps                      []cfAPIResource
-	AssociatedAppCreates      []cfAPIResource
-	AssociatedAppStarts       []cfAPIResource
-	AssociatedAppUpdates      []cfAPIResource
-	AssociatedSpaceCreates    []cfAPIResource
-	AssociatedServiceBindings []cfAPIResource
-}
-
-type org struct {
-	Name                      string
-	GUID                      string
-	Apps                      []cfAPIResource
-	AssociatedAppCreates      []cfAPIResource
-	AssociatedAppStarts       []cfAPIResource
-	AssociatedAppUpdates      []cfAPIResource
-	AssociatedSpaceCreates    []cfAPIResource
-	AssociatedServiceBindings []cfAPIResource
+type cfData struct {
+	Name             string
+	GUID             string
+	OrganizationGUID string
+	Apps             []cfAPIResource
+	AppCreates       []cfAPIResource
+	AppStarts        []cfAPIResource
+	AppUpdates       []cfAPIResource
+	SpaceCreates     []cfAPIResource
+	ServiceBindings  []cfAPIResource
 }
 
 func (client *Client) setup() error {
@@ -154,8 +143,8 @@ func (client *Client) refreshAccessToken() error {
 	return nil
 }
 
-func (client *Client) getOrgs() ([]org, error) {
-	var orgs []org
+func (client *Client) getOrgs() ([]cfData, error) {
+	var orgs []cfData
 	resp, err := client.doGetRequest("/v2/organizations")
 	if err != nil {
 		return nil, err
@@ -182,15 +171,15 @@ func (client *Client) getOrgs() ([]org, error) {
 	//fmt.Println("using json from", in, "to build orgs")
 
 	for index, resource := range in.Resources {
-		orgs = append(orgs, org{})
+		orgs = append(orgs, cfData{})
 		orgs[index].Name = resource.Entity.Name
 		orgs[index].GUID = resource.Metadata.GUID
 	}
 	return orgs, nil
 }
 
-func (client *Client) getSpaces() ([]space, error) {
-	var spaces []space
+func (client *Client) getSpaces() ([]cfData, error) {
+	var spaces []cfData
 	resp, err := client.doGetRequest("/v2/spaces")
 	if err != nil {
 		return nil, err
@@ -216,7 +205,7 @@ func (client *Client) getSpaces() ([]space, error) {
 	}
 
 	for index, resource := range in.Resources {
-		spaces = append(spaces, space{})
+		spaces = append(spaces, cfData{})
 		spaces[index].Name = resource.Entity.Name
 		spaces[index].OrganizationGUID = resource.Entity.OrganizationGUID
 		spaces[index].GUID = resource.Metadata.GUID

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	ansi "github.com/jhunt/go-ansi"
@@ -31,7 +29,7 @@ func main() {
 		if err != nil {
 			bailWith("error getting resources out of api response %s", err)
 		}
-		orgs[index].AssociatedAppCreates = resourceList
+		orgs[index].AppCreates = resourceList
 	}
 
 	//associate app starts with orgs
@@ -45,7 +43,7 @@ func main() {
 		if err != nil {
 			bailWith("error getting resources out of api resp %s", err)
 		}
-		orgs[index].AssociatedAppStarts = responseList
+		orgs[index].AppStarts = responseList
 	}
 
 	//associate app updates with orgs
@@ -63,7 +61,7 @@ func main() {
 		for _, v := range responseList {
 			sanitizeEvents(&v)
 		}
-		orgs[index].AssociatedAppStarts = responseList
+		orgs[index].AppStarts = responseList
 	}
 
 	//associate space creates with orgs
@@ -78,7 +76,7 @@ func main() {
 			bailWith("error associating space creates with orgs %s", err)
 		}
 
-		orgs[index].AssociatedAppStarts = responseList
+		orgs[index].AppStarts = responseList
 	}
 
 	//get all apps based on org
@@ -126,7 +124,7 @@ func main() {
 		if err != nil {
 			bailWith("error associating app starts with spaces %s", err)
 		}
-		spaces[index].AssociatedAppStarts = responseList
+		spaces[index].AppStarts = responseList
 	}
 
 	//associate app creates with spaces
@@ -140,7 +138,7 @@ func main() {
 		if err != nil {
 			bailWith("error associating app creates with spaces %s", err)
 		}
-		spaces[index].AssociatedAppStarts = responseList
+		spaces[index].AppStarts = responseList
 	}
 
 	//associate app updates with spaces
@@ -159,7 +157,7 @@ func main() {
 			sanitizeEvents(&v)
 		}
 
-		spaces[index].AssociatedAppStarts = responseList
+		spaces[index].AppStarts = responseList
 	}
 
 	//get all apps based on spaces
@@ -170,41 +168,29 @@ func main() {
 	// for {
 	// 	serve()
 	// }
-	err = printAsJSON("orgs.json", orgs)
+	// err = printAsJSON("orgs.json", orgs)
+	// if err != nil {
+	// 	bailWith("error writing orgs to file %s", err)
+	// }
+	// err = printAsJSON("spaces.json", spaces)
+	// if err != nil {
+	// 	bailWith("error writing spaces to file %s", err)
+	// }
+
+	err = printAsCSV("orgs.csv", orgs)
 	if err != nil {
-		bailWith("error writing orgs to file %s", err)
+		bailWith("error writing orgs to csv %s", err)
 	}
-	err = printAsJSON("spaces.json", spaces)
+
+	err = printAsCSV("spaces.csv", spaces)
 	if err != nil {
-		bailWith("error writing spaces to file %s", err)
+		bailWith("erorr writing spaces to csv %s", err)
 	}
 }
 
 func bailWith(f string, a ...interface{}) {
 	ansi.Fprintf(os.Stderr, fmt.Sprintf("@R{%s}\n", f), a...)
 	os.Exit(1)
-}
-
-func printAsJSON(fileName string, data interface{}) error {
-	output, err := json.Marshal(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	file, err := os.Create(fileName)
-	if err != nil {
-		fmt.Println("error creating file")
-		return err
-	}
-	defer file.Close()
-
-	bytesWritten, err := file.Write(output)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-	fmt.Printf("Wrote %d bytes.\n", bytesWritten)
-	return nil
 }
 
 func sanitizeApps(v *cfAPIResource) {

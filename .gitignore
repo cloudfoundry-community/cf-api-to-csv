@@ -19,3 +19,4 @@ cf-metrics-darwin
 cf-metrics-linux
 *.yml
 *.yaml
+*.csv
