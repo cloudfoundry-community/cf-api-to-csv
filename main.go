@@ -7,6 +7,14 @@ import (
 	ansi "github.com/jhunt/go-ansi"
 )
 
+type cfAPIResponse struct {
+	TotalResults int             `json:"total_results"`
+	TotalPages   int             `json:"total_pages"`
+	PrevURL      string          `json:"prev_url"`
+	NextURL      string          `json:"next_url"`
+	Resources    []cfAPIResource `json:"resources"`
+}
+
 func main() {
 	var client Client
 	err := client.setup()
@@ -161,6 +169,22 @@ func main() {
 	}
 
 	//get all apps based on spaces
+	for index, space := range spaces {
+		var returnStruct cfAPIResponse
+		err := client.cfAPIRequest("/v2/apps?q=space_guid:"+space.GUID, &returnStruct)
+		if err != nil {
+			bailWith("error associating apps with spaces: %s", err)
+		}
+		responseList, err := client.cfResourcesFromResponse(returnStruct)
+		if err != nil {
+			bailWith("error associating apps with spaces: %s", err)
+		}
+
+		for _, v := range responseList {
+			sanitizeApps(&v)
+		}
+		spaces[index].Apps = responseList
+	}
 
 	// get all service bindings based on apps by space
 

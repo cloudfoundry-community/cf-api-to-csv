@@ -2,14 +2,6 @@ package main
 
 import "time"
 
-type cfAPIResponse struct {
-	TotalResults int             `json:"total_results"`
-	TotalPages   int             `json:"total_pages"`
-	PrevURL      string          `json:"prev_url"`
-	NextURL      string          `json:"next_url"`
-	Resources    []cfAPIResource `json:"resources"`
-}
-
 type cfAPIResource struct {
 	Metadata cfAPIMetadata `json:"metadata"`
 	Entity   interface{}   `json:"entity"`
