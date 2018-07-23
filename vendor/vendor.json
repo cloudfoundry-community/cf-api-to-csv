@@ -1,0 +1,49 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "D8ksSACYQOb+3nx6lHB8kR2VCOo=",
+			"path": "github.com/gosuri/uilive",
+			"revision": "ac356e6e42cd31fcef8e6aec13ae9ed6fe87713e",
+			"revisionTime": "2017-03-23T04:15:06Z"
+		},
+		{
+			"checksumSHA1": "zTVV9gr0Qn6mDWQ5ZTiVdIJV3CE=",
+			"path": "github.com/gosuri/uiprogress",
+			"revision": "d0567a9d84a1c40dd7568115ea66f4887bf57b33",
+			"revisionTime": "2017-02-24T06:39:37Z"
+		},
+		{
+			"checksumSHA1": "1dKG7apJl3CGGIrmXMHZp3emYTQ=",
+			"path": "github.com/gosuri/uiprogress/util/strutil",
+			"revision": "d0567a9d84a1c40dd7568115ea66f4887bf57b33",
+			"revisionTime": "2017-02-24T06:39:37Z"
+		},
+		{
+			"checksumSHA1": "LJiEvVp9eaM41NGBliBKm9IY6b0=",
+			"path": "github.com/jhunt/go-ansi",
+			"revision": "73f418f6350861e7be9863de844ff9bb7855fab6",
+			"revisionTime": "2017-04-11T14:10:18Z"
+		},
+		{
+			"checksumSHA1": "w5RcOnfv5YDr3j2bd1YydkPiZx4=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c",
+			"revisionTime": "2017-11-07T05:05:31Z"
+		},
+		{
+			"checksumSHA1": "2YeDxLpLYDkQqqIjKjigC3QdGNY=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b",
+			"revisionTime": "2018-05-14T07:31:37Z"
+		},
+		{
+			"checksumSHA1": "ZSWoOPUNRr5+3dhkLK3C4cZAQPk=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "5420a8b6744d3b0345ab293f6fcba19c978f1183",
+			"revisionTime": "2018-03-28T19:50:20Z"
+		}
+	],
+	"rootPath": "github.com/aanelli/cf-metrics"
+}

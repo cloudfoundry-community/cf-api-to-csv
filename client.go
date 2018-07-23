@@ -169,7 +169,6 @@ func (client *Client) getOrgs() ([]cfData, error) {
 		return nil, err
 	}
 	//fmt.Println("using json from", in, "to build orgs")
-
 	for index, resource := range in.Resources {
 		orgs = append(orgs, cfData{})
 		orgs[index].Name = resource.Entity.Name

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gosuri/uiprogress"
 	ansi "github.com/jhunt/go-ansi"
 )
 
@@ -21,12 +22,21 @@ func main() {
 	if err != nil {
 		bailWith("err setting up client: %s", err)
 	}
+
+	//start up progress bars
+
+	fmt.Println("getting orgs")
 	orgs, err := client.getOrgs()
 	if err != nil {
 		bailWith("error getting orgs: %s", err)
 	}
 
 	//associate app creates with orgs
+	numOfOrgs := len(orgs)
+	uiprogress.Start()
+	bar1 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
+		return fmt.Sprintf("Associating app creates with orgs")
+	})
 	for index, org := range orgs {
 		var response cfAPIResponse
 		err := client.cfAPIRequest("/v2/events?q=type:audit.app.create&q=organization_guid:"+org.GUID, &response)
@@ -38,9 +48,14 @@ func main() {
 			bailWith("error getting resources out of api response %s", err)
 		}
 		orgs[index].AppCreates = resourceList
+
+		bar1.Incr()
 	}
 
 	//associate app starts with orgs
+	bar2 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
+		return fmt.Sprintf("Associating app starts with orgs")
+	})
 	for index, org := range orgs {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/events?q=type:audit.app.start&q=organization_guid:"+org.GUID, &returnStruct)
@@ -52,9 +67,13 @@ func main() {
 			bailWith("error getting resources out of api resp %s", err)
 		}
 		orgs[index].AppStarts = responseList
+		bar2.Incr()
 	}
 
 	//associate app updates with orgs
+	bar3 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
+		return fmt.Sprintf("Associating app updates with orgs")
+	})
 	for index, org := range orgs {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/events?q=type:audit.app.update&q=organization_guid:"+org.GUID, &returnStruct)
@@ -69,10 +88,14 @@ func main() {
 		for _, v := range responseList {
 			sanitizeEvents(&v)
 		}
-		orgs[index].AppStarts = responseList
+		orgs[index].AppUpdates = responseList
+		bar3.Incr()
 	}
 
 	//associate space creates with orgs
+	bar4 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
+		return fmt.Sprintf("Associating space creates with orgs")
+	})
 	for index, org := range orgs {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/events?q=type:audit.space.create&q=organization_guid:"+org.GUID, &returnStruct)
@@ -84,10 +107,13 @@ func main() {
 			bailWith("error associating space creates with orgs %s", err)
 		}
 
-		orgs[index].AppStarts = responseList
+		orgs[index].SpaceCreates = responseList
+		bar4.Incr()
 	}
 
 	//get all apps based on org
+	fmt.Println("associating apps with orgs")
+	//bar5 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed()
 	for index, org := range orgs {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/apps?q=organization_guid:"+org.GUID, &returnStruct)
@@ -103,6 +129,7 @@ func main() {
 			sanitizeApps(&v)
 		}
 		orgs[index].Apps = responseList
+		//	bar5.Incr()
 	}
 
 	//some app stuff for later?
@@ -116,12 +143,15 @@ func main() {
 	//get all service bindings based on apps by org
 
 	//grab all the spaces
+	fmt.Println("error getting spaces")
 	spaces, err := client.getSpaces()
 	if err != nil {
 		bailWith("error getting spaces: %s", err)
 	}
 
 	//associate app starts with spaces
+	fmt.Println("associating app starts with spaces")
+	//bar6 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed()
 	for index, space := range spaces {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/events?q=type:audit.app.start&q=space_guid:"+space.GUID, &returnStruct)
@@ -133,9 +163,12 @@ func main() {
 			bailWith("error associating app starts with spaces %s", err)
 		}
 		spaces[index].AppStarts = responseList
+		//	bar6.Incr()
 	}
 
 	//associate app creates with spaces
+	fmt.Println("associating app creates with spaces")
+	//bar7 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed()
 	for index, space := range spaces {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/events?q=type:audit.app.create&q=space_guid:"+space.GUID, &returnStruct)
@@ -146,10 +179,13 @@ func main() {
 		if err != nil {
 			bailWith("error associating app creates with spaces %s", err)
 		}
-		spaces[index].AppStarts = responseList
+		spaces[index].AppCreates = responseList
+		//	bar7.Incr()
 	}
 
 	//associate app updates with spaces
+	fmt.Println("associating app updates with spaces")
+	//bar8 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed()
 	for index, space := range spaces {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/events?q=type:audit.app.update&q=space_guid:"+space.GUID, &returnStruct)
@@ -165,10 +201,13 @@ func main() {
 			sanitizeEvents(&v)
 		}
 
-		spaces[index].AppStarts = responseList
+		spaces[index].AppUpdates = responseList
+		//	bar8.Incr()
 	}
 
 	//get all apps based on spaces
+	fmt.Println("associating apps with spaces")
+	//bar9 := uiprogress.AddBar(numOfOrgs).AppendCompleted().PrependElapsed()
 	for index, space := range spaces {
 		var returnStruct cfAPIResponse
 		err := client.cfAPIRequest("/v2/apps?q=space_guid:"+space.GUID, &returnStruct)
@@ -184,6 +223,7 @@ func main() {
 			sanitizeApps(&v)
 		}
 		spaces[index].Apps = responseList
+		//	bar9.Incr()
 	}
 
 	// get all service bindings based on apps by space
