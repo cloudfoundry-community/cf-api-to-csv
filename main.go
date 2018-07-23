@@ -23,8 +23,17 @@ func main() {
 		bailWith("err setting up client: %s", err)
 	}
 
-	//start up progress bars
+	//  +-+-+-+-+-+-+-+-+ +-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+
+	//  |W|a|r|n|i|n|g|:| |C|o|d|e| |d|u|p|l|i|c|a|t|i|o|n| |b|e|l|o|w|
+	//  +-+-+-+-+-+-+-+-+ +-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+
+	//  +-+-+-+-+ +-+-+ +-+-+-+-+-+-+-+-+-+-+
+	//  |W|i|l|l| |b|e| |r|e|f|a|c|t|o|r|e|d|
+	//  +-+-+-+-+ +-+-+ +-+-+-+-+-+-+-+-+-+-+
 
+	//Code duplication due to a rapid refactor before a deadline.
+	//will be refactored in the near future.
+
+	//start up progress bars
 	fmt.Println("getting orgs")
 	orgs, err := client.getOrgs()
 	if err != nil {
