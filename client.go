@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/gosuri/uiprogress"
 )
 
 //Client is a struct containing all of the basic parts to make API requests to the Cloud Foundry API
@@ -33,6 +35,15 @@ type cfData struct {
 	SpaceCreates     []cfAPIResource
 	ServiceBindings  []cfAPIResource
 }
+
+const (
+	FieldApps int = iota
+	FieldAppCreates
+	FieldAppStarts
+	FieldAppUpdates
+	FieldSpaceCreates
+	FieldServiceBindings
+)
 
 func (client *Client) setup() error {
 	//old way with yaml parsing
@@ -230,6 +241,48 @@ func (client *Client) cfAPIRequest(endpoint string, returnStruct *cfAPIResponse)
 	}
 
 	//fmt.Println("returning json", returnStruct)
+	return nil
+}
+
+func (client *Client) getEndpointData(iterateOverList []cfData, listToUpdate int, endpoint string, whatYoureDoing string) error {
+	bar := uiprogress.AddBar(len(iterateOverList)).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
+		return fmt.Sprintf(whatYoureDoing)
+	})
+	for _, datapoint := range iterateOverList {
+		var response cfAPIResponse
+		err := client.cfAPIRequest(endpoint+datapoint.GUID, &response)
+		if err != nil {
+			fmt.Println(whatYoureDoing, ":", err)
+			return err
+		}
+		cfResources, err := client.cfResourcesFromResponse(response)
+		if err != nil {
+			fmt.Println("error getting resources out of api response:", err, "while attempting:", whatYoureDoing)
+			return err
+		}
+		switch listToUpdate {
+		case FieldApps:
+			for _, v := range cfResources {
+				sanitizeApps(&v)
+			}
+			datapoint.Apps = cfResources
+		case FieldAppCreates:
+			datapoint.AppCreates = cfResources
+		case FieldAppStarts:
+			datapoint.AppStarts = cfResources
+		case FieldAppUpdates:
+			for _, v := range cfResources {
+				sanitizeEvents(&v)
+			}
+			datapoint.AppUpdates = cfResources
+		case FieldServiceBindings:
+			datapoint.ServiceBindings = cfResources
+		case FieldSpaceCreates:
+			datapoint.SpaceCreates = cfResources
+		}
+		bar.Incr()
+	}
+
 	return nil
 }
 
