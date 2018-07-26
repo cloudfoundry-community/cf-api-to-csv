@@ -34,71 +34,69 @@ func printAsJSON(fileName string, data interface{}) error {
 }
 
 //https://github.com/360EntSecGroup-Skylar/excelize
-func printAsCSV(fileName string, data []cfData) error {
+func printAsCSV(fileName string, datapoint cfData) error {
 	outputCSV := [][]string{}
 
-	for _, datapoint := range data {
-		outputCSV = append(outputCSV, []string{datapoint.Name, datapoint.GUID, datapoint.OrganizationGUID})
+	outputCSV = append(outputCSV, []string{datapoint.Name, datapoint.GUID, datapoint.OrganizationGUID})
 
-		outputCSV = append(outputCSV, []string{"\n"})
-		outputCSV = append(outputCSV, []string{"APPS"})
-		for _, app := range datapoint.Apps {
-			temp, err := convertCFAPIResourceToCSVString(app)
-			if err != nil {
-				return err
-			}
-			outputCSV = append(outputCSV, temp)
+	outputCSV = append(outputCSV, []string{"\n"})
+	outputCSV = append(outputCSV, []string{"APPS"})
+	for _, app := range datapoint.Apps {
+		temp, err := convertCFAPIResourceToCSVString(app)
+		if err != nil {
+			return err
 		}
+		outputCSV = append(outputCSV, temp)
+	}
 
-		outputCSV = append(outputCSV, []string{"\n"})
-		outputCSV = append(outputCSV, []string{"APP CREATES"})
-		for _, appCreate := range datapoint.AppCreates {
-			temp, err := convertCFAPIResourceToCSVString(appCreate)
-			if err != nil {
-				return err
-			}
-			outputCSV = append(outputCSV, temp)
+	outputCSV = append(outputCSV, []string{"\n"})
+	outputCSV = append(outputCSV, []string{"APP CREATES"})
+	for _, appCreate := range datapoint.AppCreates {
+		temp, err := convertCFAPIResourceToCSVString(appCreate)
+		if err != nil {
+			return err
 		}
+		outputCSV = append(outputCSV, temp)
+	}
 
-		outputCSV = append(outputCSV, []string{"\n"})
-		outputCSV = append(outputCSV, []string{"APP STARTS"})
-		for _, appStart := range datapoint.AppStarts {
-			temp, err := convertCFAPIResourceToCSVString(appStart)
-			if err != nil {
-				return err
-			}
-			outputCSV = append(outputCSV, temp)
+	outputCSV = append(outputCSV, []string{"\n"})
+	outputCSV = append(outputCSV, []string{"APP STARTS"})
+	for _, appStart := range datapoint.AppStarts {
+		temp, err := convertCFAPIResourceToCSVString(appStart)
+		if err != nil {
+			return err
 		}
+		outputCSV = append(outputCSV, temp)
+	}
 
-		outputCSV = append(outputCSV, []string{"\n"})
-		outputCSV = append(outputCSV, []string{"APP UPDATES"})
-		for _, appUpdate := range datapoint.AppUpdates {
-			temp, err := convertCFAPIResourceToCSVString(appUpdate)
-			if err != nil {
-				return err
-			}
-			outputCSV = append(outputCSV, temp)
+	outputCSV = append(outputCSV, []string{"\n"})
+	outputCSV = append(outputCSV, []string{"APP UPDATES"})
+	for _, appUpdate := range datapoint.AppUpdates {
+		temp, err := convertCFAPIResourceToCSVString(appUpdate)
+		if err != nil {
+			return err
 		}
+		outputCSV = append(outputCSV, temp)
+	}
 
-		outputCSV = append(outputCSV, []string{"\n"})
-		outputCSV = append(outputCSV, []string{"SPACE CREATES"})
-		for _, spaceCreate := range datapoint.SpaceCreates {
-			temp, err := convertCFAPIResourceToCSVString(spaceCreate)
-			if err != nil {
-				return err
-			}
-			outputCSV = append(outputCSV, temp)
+	outputCSV = append(outputCSV, []string{"\n"})
+	outputCSV = append(outputCSV, []string{"SPACE CREATES"})
+	for _, spaceCreate := range datapoint.SpaceCreates {
+		temp, err := convertCFAPIResourceToCSVString(spaceCreate)
+		if err != nil {
+			return err
 		}
+		outputCSV = append(outputCSV, temp)
+	}
 
-		outputCSV = append(outputCSV, []string{"\n"})
-		outputCSV = append(outputCSV, []string{"SERVICE BINDINGS"})
-		for _, serviceBinding := range datapoint.ServiceBindings {
-			temp, err := convertCFAPIResourceToCSVString(serviceBinding)
-			if err != nil {
-				return err
-			}
-			outputCSV = append(outputCSV, temp)
+	outputCSV = append(outputCSV, []string{"\n"})
+	outputCSV = append(outputCSV, []string{"SERVICE BINDINGS"})
+	for _, serviceBinding := range datapoint.ServiceBindings {
+		temp, err := convertCFAPIResourceToCSVString(serviceBinding)
+		if err != nil {
+			return err
 		}
+		outputCSV = append(outputCSV, temp)
 	}
 
 	file, err := os.Create(fileName)

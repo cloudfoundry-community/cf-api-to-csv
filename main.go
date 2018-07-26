@@ -115,14 +115,27 @@ func main() {
 	// }
 	//fmt.Println("orgs", orgs)
 	//fmt.Println("spaces", spaces)
-	err = printAsCSV("orgs.csv", orgs)
-	if err != nil {
-		bailWith("error writing orgs to csv %s", err)
+
+	//make an output folder
+	if _, err := os.Stat("output"); os.IsNotExist(err) {
+		err = os.MkdirAll("output", 0755)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	err = printAsCSV("spaces.csv", spaces)
-	if err != nil {
-		bailWith("erorr writing spaces to csv %s", err)
+	for _, org := range orgs {
+		err = printAsCSV("./output/org-"+org.Name+".csv", org)
+		if err != nil {
+			bailWith("error writing orgs to csv %s", err)
+		}
+	}
+
+	for _, space := range spaces {
+		err = printAsCSV("./output/space-"+space.Name+".csv", space)
+		if err != nil {
+			bailWith("erorr writing spaces to csv %s", err)
+		}
 	}
 }
 

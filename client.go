@@ -259,9 +259,18 @@ func (client *Client) cfAPIRequest(endpoint string, returnStruct *cfAPIResponse)
 }
 
 func (client *Client) getEndpointData(dataList []cfData, listToUpdate DataField, endpoint string, whatYoureDoing string) error {
+	if len(whatYoureDoing) < 36 {
+		//pad length to 36 chars to make it less ugly in the terminal
+		for len(whatYoureDoing) < 36 {
+			whatYoureDoing = whatYoureDoing + " "
+		}
+	}
+	//add in terminal ui progress bars with comments
 	bar := uiprogress.AddBar(len(dataList)).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
 		return fmt.Sprintf(whatYoureDoing)
 	})
+
+	//iterate over the list of orgs/spaces and ping the endpoint of choice
 	for index, datapoint := range dataList {
 		var response cfAPIResponse
 		err := client.cfAPIRequest(endpoint+datapoint.GUID, &response)
@@ -269,11 +278,15 @@ func (client *Client) getEndpointData(dataList []cfData, listToUpdate DataField,
 			fmt.Println("error making cf api request", whatYoureDoing, ":", err)
 			return err
 		}
+
+		//grab the data from said endpoint
 		cfResources, err := client.cfResourcesFromResponse(response)
 		if err != nil {
 			fmt.Println("error getting resources out of api response:", err, "while attempting:", whatYoureDoing)
 			return err
 		}
+
+		//add in the data in the chosen struct field
 		switch listToUpdate {
 		case FieldApps:
 			for _, v := range cfResources {
@@ -294,6 +307,8 @@ func (client *Client) getEndpointData(dataList []cfData, listToUpdate DataField,
 		case FieldSpaceCreates:
 			dataList[index].SpaceCreates = cfResources
 		}
+
+		//update the terminal ui
 		bar.Incr()
 	}
 
@@ -303,11 +318,12 @@ func (client *Client) getEndpointData(dataList []cfData, listToUpdate DataField,
 func (client *Client) cfResourcesFromResponse(response cfAPIResponse) ([]cfAPIResource, error) {
 	totalPages := response.TotalPages
 	var resourceList []cfAPIResource
+	//iterate over the pages of the response until you get the full list of data
 	for i := 0; i < totalPages; i++ {
 		for _, resource := range response.Resources {
 			resourceList = append(resourceList, resource)
 		}
-
+		//keep pinging the api until you get all of the data
 		if i-1 < totalPages {
 			//set the page into the next page
 			err := client.cfAPIRequest(string(response.NextURL), &response)
