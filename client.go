@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/gosuri/uiprogress"
 )
@@ -24,6 +25,18 @@ type Client struct {
 	httpClient   *http.Client
 }
 
+type cfAPIResource struct {
+	Metadata cfAPIMetadata `json:"metadata"`
+	Entity   interface{}   `json:"entity"`
+}
+
+type cfAPIMetadata struct {
+	GUID      string    `json:"guid"`
+	URL       string    `json:"url"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type cfData struct {
 	Name             string
 	GUID             string
@@ -35,9 +48,10 @@ type cfData struct {
 	SpaceCreates     []cfAPIResource
 	ServiceBindings  []cfAPIResource
 }
+type DataField int
 
 const (
-	FieldApps int = iota
+	FieldApps DataField = iota
 	FieldAppCreates
 	FieldAppStarts
 	FieldAppUpdates
@@ -244,15 +258,15 @@ func (client *Client) cfAPIRequest(endpoint string, returnStruct *cfAPIResponse)
 	return nil
 }
 
-func (client *Client) getEndpointData(iterateOverList []cfData, listToUpdate int, endpoint string, whatYoureDoing string) error {
-	bar := uiprogress.AddBar(len(iterateOverList)).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
+func (client *Client) getEndpointData(dataList []cfData, listToUpdate DataField, endpoint string, whatYoureDoing string) error {
+	bar := uiprogress.AddBar(len(dataList)).AppendCompleted().PrependElapsed().PrependFunc(func(b *uiprogress.Bar) string {
 		return fmt.Sprintf(whatYoureDoing)
 	})
-	for _, datapoint := range iterateOverList {
+	for index, datapoint := range dataList {
 		var response cfAPIResponse
 		err := client.cfAPIRequest(endpoint+datapoint.GUID, &response)
 		if err != nil {
-			fmt.Println(whatYoureDoing, ":", err)
+			fmt.Println("error making cf api request", whatYoureDoing, ":", err)
 			return err
 		}
 		cfResources, err := client.cfResourcesFromResponse(response)
@@ -265,20 +279,20 @@ func (client *Client) getEndpointData(iterateOverList []cfData, listToUpdate int
 			for _, v := range cfResources {
 				sanitizeApps(&v)
 			}
-			datapoint.Apps = cfResources
+			dataList[index].Apps = cfResources
 		case FieldAppCreates:
-			datapoint.AppCreates = cfResources
+			dataList[index].AppCreates = cfResources
 		case FieldAppStarts:
-			datapoint.AppStarts = cfResources
+			dataList[index].AppStarts = cfResources
 		case FieldAppUpdates:
 			for _, v := range cfResources {
 				sanitizeEvents(&v)
 			}
-			datapoint.AppUpdates = cfResources
+			dataList[index].AppUpdates = cfResources
 		case FieldServiceBindings:
-			datapoint.ServiceBindings = cfResources
+			dataList[index].ServiceBindings = cfResources
 		case FieldSpaceCreates:
-			datapoint.SpaceCreates = cfResources
+			dataList[index].SpaceCreates = cfResources
 		}
 		bar.Incr()
 	}

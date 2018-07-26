@@ -23,8 +23,6 @@ func main() {
 		bailWith("err setting up client: %s", err)
 	}
 
-	//start up progress bars
-	fmt.Println("getting orgs")
 	orgs, err := client.getOrgs()
 	if err != nil {
 		bailWith("error getting orgs: %s", err)
@@ -73,7 +71,6 @@ func main() {
 	//todo?
 
 	//grab all the spaces
-	fmt.Println("error getting spaces")
 	spaces, err := client.getSpaces()
 	if err != nil {
 		bailWith("error getting spaces: %s", err)
@@ -93,12 +90,15 @@ func main() {
 
 	//associate app updates with spaces
 	err = client.getEndpointData(spaces, FieldAppUpdates, "/v2/events?q=type:audit.app.update&q=space_guid:", "associating app updates with spaces")
-
+	if err != nil {
+		bailWith("error associating app updates with spaces: %s", err)
+	}
 	//get all apps based on spaces
 	err = client.getEndpointData(spaces, FieldApps, "/v2/apps?q=space_guid:", "associating apps with spaces")
 	if err != nil {
 		bailWith("error associating apps with spaces: %s", err)
 	}
+	uiprogress.Stop()
 	// get all service bindings based on apps by space
 
 	// fmt.Println(spaces
@@ -113,7 +113,8 @@ func main() {
 	// if err != nil {
 	// 	bailWith("error writing spaces to file %s", err)
 	// }
-
+	//fmt.Println("orgs", orgs)
+	//fmt.Println("spaces", spaces)
 	err = printAsCSV("orgs.csv", orgs)
 	if err != nil {
 		bailWith("error writing orgs to csv %s", err)

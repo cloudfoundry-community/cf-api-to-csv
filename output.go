@@ -19,14 +19,14 @@ func printAsJSON(fileName string, data interface{}) error {
 
 	file, err := os.Create(fileName)
 	if err != nil {
-		fmt.Println("error creating file")
+		fmt.Println("error creating file", err)
 		return err
 	}
 	defer file.Close()
 
 	bytesWritten, err := file.Write(output)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("error writing to file", err)
 		return err
 	}
 	fmt.Printf("Wrote %d bytes.\n", bytesWritten)
