@@ -62,7 +62,7 @@ const (
 func (client *Client) setup() error {
 	//old way with yaml parsing
 
-	myConf, err := GrabCFCLIENV()
+	myConf, err := grabCFCLIENV()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -89,38 +89,6 @@ func (client *Client) setup() error {
 	client.uaaURL = tmp2URL
 	client.httpClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyFromEnvironment, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	return nil
-}
-
-func (client *Client) doGetRequest(path string, secondAttempt ...bool) (*http.Response, error) {
-	//fmt.Println("performing GET Request on path: " + client.apiURL.String() + path)
-	req, err := http.NewRequest("GET", client.apiURL.String()+path, nil)
-	if err != nil {
-		fmt.Println("error forming http GET request")
-		return &http.Response{}, err
-	}
-	req.Header.Add("Authorization", client.authToken)
-
-	resp, err := client.httpClient.Do(req)
-	if err != nil {
-		fmt.Println("error attempting http GET request")
-		return &http.Response{}, err
-	}
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		return resp, nil
-	}
-
-	if (resp.StatusCode == 401 || resp.StatusCode == 403) && len(secondAttempt) == 0 {
-		err = client.refreshAccessToken()
-		if err != nil {
-			return nil, fmt.Errorf("Error refreshing token: %s", err)
-		}
-		return client.doGetRequest(path, true)
-	}
-
-	//if we hit this code we have a bad response
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-	return nil, errors.New("bad response code in response, dumping body: " + string(bodyBytes))
 }
 
 func (client *Client) refreshAccessToken() error {
@@ -170,7 +138,8 @@ func (client *Client) refreshAccessToken() error {
 
 func (client *Client) getOrgs() ([]cfData, error) {
 	var orgs []cfData
-	resp, err := client.doGetRequest("/v2/organizations")
+	var resp cfAPIResponse
+	err := client.cfAPIRequest("/v2/organizations", &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +173,8 @@ func (client *Client) getOrgs() ([]cfData, error) {
 
 func (client *Client) getSpaces() ([]cfData, error) {
 	var spaces []cfData
-	resp, err := client.doGetRequest("/v2/spaces")
+	var resp cfAPIResponse
+	err := client.cfAPIRequest("/v2/spaces", &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -237,8 +207,35 @@ func (client *Client) getSpaces() ([]cfData, error) {
 	return spaces, nil
 }
 
-func (client *Client) cfAPIRequest(endpoint string, returnStruct *cfAPIResponse) error {
-	resp, err := client.doGetRequest(endpoint)
+func (client *Client) cfAPIRequest(endpoint string, returnStruct *cfAPIResponse, secondAttempt ...bool) error {
+
+	//fmt.Println("performing GET Request on path: " + client.apiURL.String() + path)
+	req, err := http.NewRequest("GET", client.apiURL.String()+endpoint, nil)
+	if err != nil {
+		fmt.Println("error forming http GET request")
+		return err
+	}
+	req.Header.Add("Authorization", client.authToken)
+
+	resp, err := client.httpClient.Do(req)
+	if err != nil {
+		fmt.Println("error attempting http GET request")
+		return err
+	}
+
+	if (resp.StatusCode == 401 || resp.StatusCode == 403) && len(secondAttempt) == 0 {
+		err = client.refreshAccessToken()
+		if err != nil {
+			return fmt.Errorf("Error refreshing token: %s", err)
+		}
+		return client.cfAPIRequest(endpoint, returnStruct, true)
+	}
+
+	if resp.StatusCode >= 400 || resp.StatusCode <= 500 {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		return errors.New("bad response code in response, dumping body: " + string(bodyBytes))
+	}
+
 	//fmt.Println("got response from endpoint", endpoint)
 	if err != nil {
 		bailWith("err hitting cf endpoint: %s", err)

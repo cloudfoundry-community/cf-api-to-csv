@@ -15,7 +15,7 @@ type Config struct {
 	Password   string `yaml:"password"`
 }
 
-func parseConfig(path string) (*Config, error) {
+func parseYamlConfig(path string) (*Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("Could not open config at `%s': %s", path, err)
@@ -45,7 +45,7 @@ type cfCLIConfig struct {
 	UAAClientSecret string `json:"UAAOAuthClientSecret"`
 }
 
-func GrabCFCLIENV() (*cfCLIConfig, error) {
+func grabCFCLIENV() (*cfCLIConfig, error) {
 
 	raw, err := ioutil.ReadFile(os.Getenv("HOME") + "/.cf/config.json")
 	if err != nil {
