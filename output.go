@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aanelli/cf-metrics/flatten"
+	"github.com/jeremywohl/flatten"
 )
 
 func printAsJSON(fileName string, data interface{}) error {
@@ -128,7 +128,8 @@ func convertCFAPIResourceToCSVString(resource cfAPIResource) ([]string, error) {
 	stringyJSON := string(jsonBytes[:])
 
 	//flatten the json, and separate by comma
-	flatData, err := flatten.FlattenString(stringyJSON, "")
+
+	flatData, err := flatten.FlattenString(stringyJSON, "", flatten.DotStyle)
 	if err != nil {
 		return nil, nil
 	}
