@@ -1,0 +1,22 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+cf-metrics
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+#configuration data
+orgs.json
+spaces.json
+cf-metrics-darwin
+cf-metrics-linux
+*.yml
+*.yaml
+*.csv
